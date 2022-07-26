@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>mobile_manipulator</name>
+  <name>mobile_manipulation_central</name>
   <version>0.0.0</version>
   <description>Shared code for mobile manipulator experiments.</description>
   <maintainer email="adam.heins@robotics.utias.utoronto.ca">Adam Heins</maintainer>
