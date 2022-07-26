@@ -1,16 +1,31 @@
-# Mobile Manipulator Experiment Code
+# Mobile Manipulator Shared Code
 
 This repository contains shared code for running experiments with the "Thing"
 mobile manipulator.
+
+### Hardware
+
+The robot consists of a UR10 manipulator mounted on a Ridgeback omnidirectional
+mobile base. The base has a Hokuyo UST-10LX laser range finder mounted at the
+front that provides a two-dimensional scan in a 270 degree arc in front of the
+robot. The end effector has a Robotiq FT 300 force torque sensor mounted at the
+wrist to measure the applied wrench, as well as Robotiq 3 finger gripper for
+manipulation.
+
+### Software
+
+The Ridgeback is currently running Ubuntu 20.04 on its onboard computer. The
+UR10 is running firmware version 3.15.
 
 ## Installation and setup
 
 Clone this repository into the catkin workspace:
 ```
-git clone https://github.com/utiasDSL/mobile_manipulator catkin_ws/src
+cd catkin_ws/src
+git clone https://github.com/utiasDSL/dsl__projects__mobile_manipulation_central mobile_manipulation_central
 ```
 
-Clone dependencies into the catkin workspace:
+Install dependencies into the catkin workspace:
 * [ur_robot_driver](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver) - for the UR10 arm
 * [robotiq](https://github.com/ros-industrial/robotiq) - for the Robotiq 3F gripper
 
