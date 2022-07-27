@@ -4,5 +4,5 @@
 <launch>
   <!-- We don't use kinematics_params here but it is passed in by the UR driver infrastructure so we need to acknowledge it. -->
   <arg name="kinematics_params" />
-  <param name="robot_description" command="$(find xacro)/xacro $(find mobile_manipulator)/urdf/xacro/thing.urdf.xacro" />
+  <param name="robot_description" command="$(find xacro)/xacro $(find mobile_manipulation_central)/urdf/xacro/thing.urdf.xacro" />
 </launch>
