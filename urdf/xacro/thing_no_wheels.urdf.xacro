@@ -47,14 +47,14 @@ joints.
   <link name="chassis_link">
     <visual>
       <geometry>
-        <mesh filename="file://$(find upright_assets)/thing/meshes/ridgeback/body.stl"/>
+        <mesh filename="file://$(find mobile_manipulation_central)/meshes/ridgeback/body.stl"/>
       </geometry>
       <material name="black"/>
     </visual>
     <collision>
       <origin xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find upright_assets)/thing/meshes/ridgeback/body-collision.stl"/>
+        <mesh filename="file://$(find mobile_manipulation_central)/meshes/ridgeback/body-collision.stl"/>
       </geometry>
     </collision>
     <inertial>
@@ -78,7 +78,7 @@ joints.
     <visual>
       <origin rpy="0 0 3.14159265359" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find upright_assets)/thing/meshes/ridgeback/side-cover.stl"/>
+        <mesh filename="file://$(find mobile_manipulation_central)/meshes/ridgeback/side-cover.stl"/>
       </geometry>
       <material name="yellow"/>
     </visual>
@@ -87,7 +87,7 @@ joints.
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find upright_assets)/thing/meshes/ridgeback/side-cover.stl"/>
+        <mesh filename="file://$(find mobile_manipulation_central)/meshes/ridgeback/side-cover.stl"/>
       </geometry>
       <material name="yellow"/>
     </visual>
@@ -101,7 +101,7 @@ joints.
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find upright_assets)/thing/meshes/ridgeback/end-cover.stl"/>
+        <mesh filename="file://$(find mobile_manipulation_central)/meshes/ridgeback/end-cover.stl"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -115,7 +115,7 @@ joints.
     <visual>
       <origin rpy="0 0 3.14159265359" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find upright_assets)/thing/meshes/ridgeback/end-cover.stl"/>
+        <mesh filename="file://$(find mobile_manipulation_central)/meshes/ridgeback/end-cover.stl"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -134,7 +134,7 @@ joints.
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find upright_assets)/thing/meshes/ridgeback/lights.stl"/>
+        <mesh filename="file://$(find mobile_manipulation_central)/meshes/ridgeback/lights.stl"/>
       </geometry>
       <material name="white"/>
     </visual>
@@ -143,7 +143,7 @@ joints.
     <visual>
       <origin rpy="0 0 3.14159265359" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find upright_assets)/thing/meshes/ridgeback/lights.stl"/>
+        <mesh filename="file://$(find mobile_manipulation_central)/meshes/ridgeback/lights.stl"/>
       </geometry>
       <material name="red"/>
     </visual>
@@ -157,14 +157,14 @@ joints.
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find upright_assets)/thing/meshes/ridgeback/top.stl"/>
+        <mesh filename="file://$(find mobile_manipulation_central)/meshes/ridgeback/top.stl"/>
       </geometry>
       <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find upright_assets)/thing/meshes/ridgeback/top.stl"/>
+        <mesh filename="file://$(find mobile_manipulation_central)/meshes/ridgeback/top.stl"/>
       </geometry>
     </collision>
   </link>
@@ -172,7 +172,7 @@ joints.
   <link name="arch_link">
     <visual>
       <geometry>
-        <mesh filename="file://$(find upright_assets)/thing/meshes/tor11_mech.dae"/>
+        <mesh filename="file://$(find mobile_manipulation_central)/meshes/tor11_mech.dae"/>
       </geometry>
       <material name="LightGrey">
         <color rgba="0.7 0.7 0.7 1.0"/>
@@ -190,8 +190,8 @@ joints.
   <xacro:include filename="$(find ur_description)/urdf/inc/ur10_macro.xacro"/>
   <xacro:ur10_robot
     prefix="ur10_arm_"
-    visual_parameters_file="$(find upright_assets)/config/ur10/visual_parameters.yaml"
-    kinematics_parameters_file="$(find upright_assets)/config/ur10/calibration.yaml"
+    visual_parameters_file="$(find mobile_manipulation_central)/config/ur10/visual_parameters.yaml"
+    kinematics_parameters_file="$(find mobile_manipulation_central)/config/ur10/calibration.yaml"
   />
 
   <!-- Join arm to the base -->

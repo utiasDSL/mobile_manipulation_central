@@ -3,7 +3,7 @@ import numpy as np
 import rospy
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
-from upright_ros_interface import TrajectoryClient, UR10_JOINT_NAMES, UR10_HOME
+from mobile_manipulation_central import TrajectoryClient, UR10_JOINT_NAMES, UR10_HOME
 
 
 def sinusoid(amplitude, frequency, time):
