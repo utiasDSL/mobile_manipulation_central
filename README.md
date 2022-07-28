@@ -57,6 +57,10 @@ sourced.
 
 ## Usage
 
+Some scripts expect the environment variable
+`MOBILE_MANIPULATION_CENTRAL_BAG_DIR` to point to the directory where bags are
+stored (to create or read bag files). Export this variable in your `.bashrc`.
+
 Start robot drivers:
 ```
 roslaunch mobile_manipulator thing.launch

@@ -1,5 +1,5 @@
 #!/bin/sh
-BAG_DIR=/media/adam/Data/PhD/Data/upright/real-thing/bags/$(date +"%Y-%m-%d")
+BAG_DIR=$MOBILE_MANIPULATION_CENTRAL_BAG_DIR/$(date +"%Y-%m-%d")
 mkdir -p "$BAG_DIR"
 
 rosbag record -o "$BAG_DIR/$1" \

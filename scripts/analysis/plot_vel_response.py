@@ -5,15 +5,11 @@ import numpy as np
 import rosbag
 import matplotlib.pyplot as plt
 from scipy import signal, optimize
-from mobile_manipulation_central import ros_utils
+from mobile_manipulation_central import BAG_DIR, ros_utils
 
-import IPython
 
-# TODO change to wherever you have the bags; this should somehow be part of a
-# config file
-BAG_DIR = "/media/adam/Data/PhD/Data/upright/real-thing/bags/2022-07-25/velocity_test"
 BAG_PATHS = [
-    BAG_DIR + "/" + path
+    BAG_DIR + "/2022-07-25/velocity_test/" + path
     for path in [
         "velocity_test_joint0_v0.5_2022-07-25-15-32-43.bag",
         "velocity_test_joint1_v0.5_2022-07-25-15-39-15.bag",
