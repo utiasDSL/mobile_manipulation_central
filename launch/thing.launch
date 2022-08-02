@@ -18,4 +18,10 @@
     <arg name="controllers" value="joint_state_controller" />
     <arg name="stopped_controllers" value="scaled_vel_joint_traj_controller joint_group_vel_controller" />
   </include>
+
+  <!-- Launch Ridgeback controller. -->
+  <rosparam command="load" file="$(find ridgeback_control)/config/control.yaml" />
+
+  <node name="controller_spawner" pkg="controller_manager" type="spawner"
+        args="ridgeback_joint_publisher ridgeback_velocity_controller" />
 </launch>

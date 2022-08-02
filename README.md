@@ -28,6 +28,9 @@ git clone https://github.com/utiasDSL/dsl__projects__mobile_manipulation_central
 Install dependencies into the catkin workspace:
 * [ur_robot_driver](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver) - for the UR10 arm
 * [robotiq](https://github.com/ros-industrial/robotiq) - for the Robotiq 3F gripper
+* [vicon_bridge](https://github.com/ethz-asl/vicon_bridge) - required to track
+  the position of the mobile base. May also be useful to track other objects,
+  calibrate the EE pose, etc.
 
 Build the workspace:
 ```
