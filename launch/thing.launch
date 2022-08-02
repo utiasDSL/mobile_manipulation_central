@@ -9,8 +9,11 @@
   <!-- subscribed to by the joint_group_vel_controller -->
   <remap from="/joint_group_vel_controller/command" to="/mobile_manipulator_cmd_vel" />
 
+  <rosparam command="load" file="$(find ridgeback_control)/config/control.yaml" />
+
   <!-- Launch UR10 driver. -->
-  <include file="$(find ur_robot_driver)/launch/ur10_bringup.launch" >
+  <!-- namespace is required to avoid conflict with Ridgeback control topics/services -->
+  <include file="$(find ur_robot_driver)/launch/ur10_bringup.launch" ns="ur10">
     <arg name="robot_ip" default="192.168.131.40"/>
     <arg name="kinematics_config" default="$(find mobile_manipulation_central)/config/ur10/calibration.yaml"/>
     <arg name="robot_description_file" value="$(find mobile_manipulation_central)/launch/thing_description.launch" />
@@ -18,10 +21,4 @@
     <arg name="controllers" value="joint_state_controller" />
     <arg name="stopped_controllers" value="scaled_vel_joint_traj_controller joint_group_vel_controller" />
   </include>
-
-  <!-- Launch Ridgeback controller. -->
-  <rosparam command="load" file="$(find ridgeback_control)/config/control.yaml" />
-
-  <node name="controller_spawner" pkg="controller_manager" type="spawner"
-        args="ridgeback_joint_publisher ridgeback_velocity_controller" />
 </launch>
