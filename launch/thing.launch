@@ -9,8 +9,6 @@
   <!-- subscribed to by the joint_group_vel_controller -->
   <remap from="/joint_group_vel_controller/command" to="/mobile_manipulator_cmd_vel" />
 
-  <rosparam command="load" file="$(find ridgeback_control)/config/control.yaml" />
-
   <!-- Launch UR10 driver. -->
   <!-- namespace is required to avoid conflict with Ridgeback control topics/services -->
   <include file="$(find ur_robot_driver)/launch/ur10_bringup.launch" ns="ur10">

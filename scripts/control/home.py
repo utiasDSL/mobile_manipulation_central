@@ -13,10 +13,10 @@ if __name__ == "__main__":
     rospy.init_node("home")
 
     parser = argparse.ArgumentParser()
-    argparser.add_argument(
+    parser.add_argument(
         "duration", type=float, help="Duration of homing trajectory."
     )
-    cli_args = argparser.parse_args()
+    cli_args = parser.parse_args()
 
     if cli_args.duration < 3.0:
         print("Home trajectory duration should be at least 3 seconds.")
