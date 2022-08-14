@@ -3,8 +3,7 @@ BAG_DIR=$MOBILE_MANIPULATION_CENTRAL_BAG_DIR/$(date +"%Y-%m-%d")
 mkdir -p "$BAG_DIR"
 
 rosbag record -o "$BAG_DIR/$1" \
-  /clock /ur10_joint_states /ur10_cmd_vel \
-  /ridgeback_velocity_controller/cmd_vel \
-  /ridgeback_velocity_controller/odom \
-  --regex "/scaled_vel_joint_traj_controller/(.*)" \
-  --regex "/mobile_manipulator_(.*)"
+  /clock \
+  --regex "/ridgeback_velocity_controller/(.*)" \
+  --regex "/ur10/(.*)" \
+  --regex "/vicon/(.*)"

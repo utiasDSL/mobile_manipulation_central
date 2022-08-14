@@ -66,7 +66,7 @@ stored (to create or read bag files). Export this variable in your `.bashrc`.
 
 Start robot drivers:
 ```
-roslaunch mobile_manipulator thing.launch
+roslaunch mobile_manipulation_central thing.launch
 ```
 
 Interaction with the robot is done using
@@ -81,10 +81,16 @@ rosrun controller_manager controller_manager start <controller_name>
 rosrun controller_manager controller_manager stop <controller_name>
 ```
 
+### Vicon
+
+Vicon is used to track the base position as well as any other objects in the
+scene. Run
+```
+roslaunch mobile_manipulation_central vicon.launch
+```
+to connect to Vicon. You must be connected to the `DSL_DroneNet_5G` network.
+
 ## Issues/todo
-* There is a conflict between the controller manager automatically started on
-  board the Ridgeback and by the ur_robot_driver. The result is that the
-  Ridgeback cannot be commanded once the ur_robot_driver has been launched.
 * Scripts should automatically start the controllers they need if they are not
   already running
 * Scripts should automatically read the the robot's current position in order
@@ -92,4 +98,3 @@ rosrun controller_manager controller_manager stop <controller_name>
 * Currently `thing.launch` only starts the UR10; eventually it should start
   whatever is needed for the Ridgeback on the laptop side, as well as the
   Robotiq force-torque sensor.
-* Add Vicon stuff.
