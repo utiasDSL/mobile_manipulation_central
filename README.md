@@ -97,10 +97,11 @@ to connect to Vicon. You must be connected to the `DSL_DroneNet_5G` network.
 With reference to [this
 file](https://github.com/ridgeback/ridgeback/blob/melodic-devel/ridgeback_control/config/control.yaml),
 the limits are:
-             | x         | y         | yaw 
--------------|-----------|-----------|------------
-Velocity     | 1.1 m/s   | 1.1 m/s   | 2.0 rad/s
-Acceleration | 2.5 m/s^2 | 2.5 m/s^2 | 1.0 rad/s^2
+
+|              | x         | y         | yaw          |
+| ------------ | --------- | --------- | ------------ |
+| Velocity     | 1.1 m/s   | 1.1 m/s   | 2.0 rad/s    |
+| Acceleration | 2.5 m/s^2 | 2.5 m/s^2 | 1.0 rad/s^2  |
 
 ### UR10 limits
 With reference to the UR10 datasheet, the joint limits are:
