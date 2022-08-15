@@ -8,7 +8,7 @@ from std_msgs.msg import Float64MultiArray
 if __name__ == "__main__":
     rospy.init_node("velocity_test")
 
-    pub = rospy.Publisher("mobile_manipulator_cmd_vel", Float64MultiArray, queue_size=1)
+    pub = rospy.Publisher("ur10/cmd_vel", Float64MultiArray, queue_size=1)
 
     rospy.sleep(1.0)
 

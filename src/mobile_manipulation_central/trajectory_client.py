@@ -30,6 +30,7 @@ class TrajectoryClient:
     """Small trajectory client to test a joint trajectory"""
 
     def __init__(self, joint_trajectory_controller=None):
+        # TODO pass in a namespace argument
         timeout = rospy.Duration(5)
         self.switch_srv = rospy.ServiceProxy(
             "ur10/controller_manager/switch_controller", SwitchController
@@ -84,6 +85,7 @@ class TrajectoryClient:
         self.load_srv(srv)
 
         # switch to the desired controller from whatever is currently active
+        # TODO check if controller is already active first
         srv = SwitchControllerRequest()
         srv.stop_controllers = other_controllers
         srv.start_controllers = [target_controller]
