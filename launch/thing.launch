@@ -3,12 +3,8 @@
 <!-- Launch the Thing driver. -->
 <!-- Currently only launches the UR10 -->
 <launch>
-  <!-- published by the joint_state_controller -->
-  <!-- <remap from="/joint_states" to="/mobile_manipulator_joint_states" /> -->
-
   <!-- subscribed to by the joint_group_vel_controller -->
-  <!-- TODO verify that with the namespace below this resolves to /ur10/cmd_vel -->
-  <remap from="/joint_group_vel_controller/command" to="/cmd_vel" />
+  <remap from="joint_group_vel_controller/command" to="cmd_vel" />
 
   <!-- Launch UR10 driver. -->
   <!-- namespace is required to avoid conflict with Ridgeback control topics/services -->

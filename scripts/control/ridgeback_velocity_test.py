@@ -14,7 +14,9 @@ if __name__ == "__main__":
     v = 0.5
     duration = 1.0
     msg = Twist()
-    msg.linear.x = v
+    # msg.linear.x = v
+    # msg.linear.y = v
+    msg.angular.z = v
     rate = rospy.Rate(125)
 
     now = rospy.Time.now().to_sec()

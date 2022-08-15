@@ -110,6 +110,11 @@ def trim_msgs(msgs, t0=None, t1=None):
     return msgs[start:end]
 
 
-def quaternion_from_msg(self, msg):
+def quaternion_from_msg(msg):
     """Parse a spatialmath quaternion from a geometry_msgs/Quaternion ROS message."""
     return UnitQuaternion(s=msg.w, v=[msg.x, msg.y, msg.z])
+
+def yaw_from_quaternion_msg(msg):
+    """Return the yaw component of a geometry_msgs/Quaternion ROS message."""
+    Q = quaternion_from_msg(msg)
+    return Q.rpy()[2]
