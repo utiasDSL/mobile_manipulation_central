@@ -60,36 +60,6 @@ def parse_ur10_joint_state_msgs(msgs):
     return np.array(ts), np.array(qs), np.array(vs)
 
 
-# TODO deprecated in favour of the above
-# def parse_feedback_msgs(feedback_msgs):
-#     """Parse JointState feedback messages.
-#
-#     This involves reordering the joints in the correct order.
-#
-#     Returns:
-#         ts  times
-#         qs  joint positions
-#         vs  joint velocities
-#     """
-#     ts = parse_time(feedback_msgs, normalize_time=False)
-#     qs_unordered = np.array([msg.position for msg in feedback_msgs])
-#     vs_unordered = np.array([msg.velocity for msg in feedback_msgs])
-#
-#     qs = np.zeros_like(qs_unordered)
-#     vs = np.zeros_like(vs_unordered)
-#
-#     joint_names = feedback_msgs[0].name
-#
-#     # re-order joint names so the names correspond to indices given in
-#     # JOINT_INDEX_MAP
-#     for i in range(qs.shape[1]):
-#         j = UR10_JOINT_INDEX_MAP[joint_names[i]]
-#         qs[:, j] = qs_unordered[:, i]
-#         vs[:, j] = vs_unordered[:, i]
-#
-#     return ts, qs, vs
-
-
 def trim_msgs(msgs, t0=None, t1=None):
     """Trim messages that so only those in the time interval [t0, t1] are included."""
     ts = parse_time(msgs, normalize_time=False)
@@ -114,7 +84,29 @@ def quaternion_from_msg(msg):
     """Parse a spatialmath quaternion from a geometry_msgs/Quaternion ROS message."""
     return UnitQuaternion(s=msg.w, v=[msg.x, msg.y, msg.z])
 
+
 def yaw_from_quaternion_msg(msg):
     """Return the yaw component of a geometry_msgs/Quaternion ROS message."""
     Q = quaternion_from_msg(msg)
     return Q.rpy()[2]
+
+
+def parse_ridgeback_vicon_msg(msg):
+    """ Get the base's (x, y, yaw) 2D pose from a geometry_msgs/TransformStamped ROS message from Vicon."""
+    t = msg_time(msg)
+    x = msg.transform.translation.x
+    y = msg.transform.translation.y
+    θ = yaw_from_quaternion_msg(msg.transform.rotation)
+    q = np.array([x, y, θ])
+    return t, q
+
+
+def parse_ridgeback_vicon_msgs(msgs):
+    """Parse a list of Vicon messages representing the base's pose."""
+    ts = []
+    qs = []
+    for msg in msgs:
+        t, q = parse_ridgeback_vicon_msg(msg)
+        ts.append(t)
+        qs.append(q)
+    return np.array(ts), np.array(qs)

@@ -1,3 +1,4 @@
+"""Plot velocity step responses for the Ridgeback base."""
 import sys
 from functools import partial
 
@@ -5,9 +6,7 @@ import numpy as np
 import rosbag
 import matplotlib.pyplot as plt
 from scipy import signal, optimize
-from mobile_manipulation_central import BAG_DIR, ros_utils
-
-import IPython
+from mobile_manipulation_central import BAG_DIR, ros_utils, sysid
 
 
 BAG_PATHS = [
@@ -25,27 +24,23 @@ JOINT_NAMES = ["Base X", "Base Y", "Base Yaw"]
 def process_one_bag(path, joint_idx):
     bag = rosbag.Bag(path)
 
-    feedback_msgs = [
+    vicon_msgs = [
         msg for _, msg, _ in bag.read_messages("/vicon/ThingBase/ThingBase")
     ]
 
+    # remove first cmd since it is always zero (ridgeback controller seems to
+    # automatically publish a single zero command when a connection is first
+    # made)
     cmd_msgs = [msg for _, msg, _ in bag.read_messages("/ridgeback_velocity_controller/cmd_vel")][1:]
     cmd_ts = np.array([t.to_sec() for _, _, t in bag.read_messages("/ridgeback_velocity_controller/cmd_vel")])[1:]
 
     # trim messages to around the time of the step command
     t0 = cmd_ts[0] - 0.1
     t1 = cmd_ts[-1] + 1.0
-    feedback_msgs = ros_utils.trim_msgs(feedback_msgs, t0=t0, t1=t1)
+    vicon_msgs = ros_utils.trim_msgs(vicon_msgs, t0=t0, t1=t1)
 
     # parse Vicon messages for base pose
-    ts = []
-    qs = []
-    for msg in feedback_msgs:
-        ts.append(ros_utils.msg_time(msg))
-        x = msg.transform.translation.x
-        y = msg.transform.translation.y
-        θ = ros_utils.yaw_from_quaternion_msg(msg.transform.rotation)
-        qs.append(np.array([x, y, θ]))
+    ts, qs = ros_utils.parse_ridgeback_vicon_msgs(vicon_msgs)
 
     # numerically differentiate base pose to get velocities
     vs = []
@@ -53,7 +48,10 @@ def process_one_bag(path, joint_idx):
         dt = ts[i + 1] - ts[i]
         dq = qs[i + 1] - qs[i]
         vs.append(dq / dt)
-    vs = np.array(vs)
+    vs = np.array(vs)[:, joint_idx]
+
+    # remove last time to align with size of vs
+    ts = np.array(ts)[:-1]
 
     # command values should all be the same
     cmd_value = [cmd_msgs[0].linear.x, cmd_msgs[0].linear.y, cmd_msgs[0].angular.z][joint_idx]
@@ -61,15 +59,29 @@ def process_one_bag(path, joint_idx):
     for i in range(len(ts)):
         us[i] = 0 if ts[i] < cmd_ts[0] or ts[i] > cmd_ts[-1] else cmd_value
 
-    ts = np.array(ts) - ts[0]
+    # normalize time
+    ts -= ts[0]
 
+    # fit first- and second-order models to the data
+    ωn, ζ = sysid.identify_second_order_system(ts, us, vs)
+    τ = sysid.identify_first_order_system(ts, us, vs)
+
+    # forward simulate the models
+    vs_fit1 = sysid.simulate_first_order_system(ts, τ, us)
+    vs_fit2 = sysid.simulate_second_order_system(ts, ωn, ζ, us)
+
+    # plot
     plt.figure()
 
     # actual output
-    plt.plot(ts[:-1], vs[:, joint_idx], label="Actual")
+    plt.plot(ts, vs, label="Actual")
 
     # commands
     plt.plot(ts, us, linestyle="--", label="Commanded")
+
+    # fitted models
+    plt.plot(ts, vs_fit1, label="First-order model")
+    plt.plot(ts, vs_fit2, label="Second-order model")
 
     plt.xlabel("Time (s)")
     plt.ylabel("Joint velocity (rad/s)")

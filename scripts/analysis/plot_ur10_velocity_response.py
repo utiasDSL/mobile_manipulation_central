@@ -4,8 +4,7 @@ from functools import partial
 import numpy as np
 import rosbag
 import matplotlib.pyplot as plt
-from scipy import signal, optimize
-from mobile_manipulation_central import BAG_DIR, ros_utils
+from mobile_manipulation_central import BAG_DIR, ros_utils, sysid
 
 
 BAG_PATHS = [
@@ -43,64 +42,17 @@ def parse_velocity_data(feedback_msgs, cmd_msgs, cmd_ts, idx):
     return ts, us, vs
 
 
-# system identification routines adapted from
-# https://medium.com/robotics-devs/system-identification-with-python-2079088b4d03
-def simulate_second_order_system(ts, ωn, ζ, us, k=1):
-    """Simulate a second-order system with parameters (k, ωn, ζ) and inputs us at times ts."""
-    sys = signal.TransferFunction(k * (ωn ** 2), [1, 2 * ζ * ωn, ωn ** 2])
-    _, ys, _ = signal.lsim2(sys, U=us, T=ts)
-    return ys
-
-
-def simulate_first_order_system(ts, τ, us, k=1):
-    """Simulate a second-order system with parameters (k, ωn, ζ) and inputs us at times ts."""
-    sys = signal.TransferFunction(k, [τ, 1])
-    _, ys, _ = signal.lsim2(sys, U=us, T=ts)
-    return ys
-
-
-def identify_first_order_system(ts, us, ys, method="trf", p0=[1.0]):
-    """Fit a second-order model to the inputs us and outputs ys at times ts."""
-    # bounds: assume system is not overdamped
-    bounds = ([0], [np.inf])
-    model = partial(simulate_first_order_system, us=us)
-    (τ,), covariance = optimize.curve_fit(
-        model,
-        ts,
-        ys,
-        method=method,
-        p0=p0,
-        bounds=bounds,
-    )
-    return τ
-
-
-def identify_second_order_system(ts, us, ys, method="trf", p0=[10.0, 0.1]):
-    """Fit a second-order model to the inputs us and outputs ys at times ts."""
-    # bounds: assume system is not overdamped
-    bounds = ([0, 0], [np.inf, 1.0])
-    model = partial(simulate_second_order_system, us=us)
-    (ωn, ζ), covariance = optimize.curve_fit(
-        model,
-        ts,
-        ys,
-        method=method,
-        p0=p0,
-        bounds=bounds,
-    )
-    return ωn, ζ
-
-
 def process_one_bag(path, joint_idx):
     bag = rosbag.Bag(path)
 
+    # TODO these topic names are deprecated
     feedback_msgs = [
         msg for _, msg, _ in bag.read_messages("/mobile_manipulator_joint_states")
     ]
 
     cmd_msgs = [msg for _, msg, _ in bag.read_messages("/mobile_manipulator_cmd_vel")]
 
-    # get times of the command messagse, since these do not contain a timestamp
+    # get times of the command messages, since these do not contain a timestamp
     cmd_ts = np.array(
         [t.to_sec() for _, _, t in bag.read_messages("/mobile_manipulator_cmd_vel")]
     )
@@ -109,12 +61,13 @@ def process_one_bag(path, joint_idx):
         feedback_msgs, cmd_msgs, cmd_ts, idx=joint_idx
     )
 
-    # fit a second-order model to the data
-    ωn, ζ = identify_second_order_system(ts, us, ys_actual)
-    τ = identify_first_order_system(ts, us, ys_actual)
+    # fit first- and second-order models to the data
+    ωn, ζ = sysid.identify_second_order_system(ts, us, ys_actual)
+    τ = sysid.identify_first_order_system(ts, us, ys_actual)
 
-    ys_fit1 = simulate_first_order_system(ts, τ, us)
-    ys_fit2 = simulate_second_order_system(ts, ωn, ζ, us)
+    # forward simulate the models
+    ys_fit1 = sysid.simulate_first_order_system(ts, τ, us)
+    ys_fit2 = sysid.simulate_second_order_system(ts, ωn, ζ, us)
 
     # make sure all steps are in positive direction for consistency
     if us[-1] < 0:

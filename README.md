@@ -117,6 +117,12 @@ files (for acceleration), the joint limits are:
 | 5     | +/- 2 pi       | +/- pi            | +/- 40                 |
 | 6     | +/- 2 pi       | +/- pi            | +/- 40                 |
 
+## Misc notes
+* The Ridgeback controller automatically publishes a zero command (i.e. brake)
+  to the Ridgeback when a new connection is made; i.e., when something new
+  subscribes or publishes to the `cmd_vel` topic. This appears to be due to
+  [this line](https://github.com/ridgeback/ridgeback/blob/melodic-devel/ridgeback_control/src/mecanum_drive_controller.cpp#L281).
+
 ## Issues/todo
 * Scripts should automatically start the controllers they need if they are not
   already running
