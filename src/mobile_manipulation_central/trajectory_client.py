@@ -32,10 +32,10 @@ class TrajectoryClient:
     def __init__(self, joint_trajectory_controller=None):
         timeout = rospy.Duration(5)
         self.switch_srv = rospy.ServiceProxy(
-            "controller_manager/switch_controller", SwitchController
+            "ur10/controller_manager/switch_controller", SwitchController
         )
         self.load_srv = rospy.ServiceProxy(
-            "controller_manager/load_controller", LoadController
+            "ur10/controller_manager/load_controller", LoadController
         )
         try:
             self.switch_srv.wait_for_service(timeout.to_sec())
@@ -50,7 +50,7 @@ class TrajectoryClient:
             self.switch_controller(joint_trajectory_controller)
 
         self.client = actionlib.SimpleActionClient(
-            "{}/follow_joint_trajectory".format(joint_trajectory_controller),
+            "ur10/{}/follow_joint_trajectory".format(joint_trajectory_controller),
             FollowJointTrajectoryAction,
         )
 
