@@ -98,13 +98,24 @@ With reference to [this
 file](https://github.com/ridgeback/ridgeback/blob/melodic-devel/ridgeback_control/config/control.yaml),
 the limits are:
 
-|              | x         | y         | yaw          |
-| ------------ | --------- | --------- | ------------ |
-| Velocity     | 1.1 m/s   | 1.1 m/s   | 2.0 rad/s    |
-| Acceleration | 2.5 m/s^2 | 2.5 m/s^2 | 1.0 rad/s^2  |
+| Joint | Velocity  | Acceleration |
+| ----- | --------- | ------------ |
+| x     | 1.1 m/s   | 2.5 m/s^2    |
+| y     | 1.1 m/s   | 2.5 m/s^2    |
+| yaw   | 2.0 rad/s | 1.0 rad/s^2  |
 
 ### UR10 limits
-With reference to the UR10 datasheet, the joint limits are:
+With reference to the UR10 datasheet as well as the onboard UR10 configuration
+files (for acceleration), the joint limits are:
+
+| Joint | Position (rad) | Velocity (rad/s)  | Acceleration (rad/s^2) |
+| ----- | -------------- | ----------------- | ---------------------- |
+| 1     | +/- 2 pi       | +/- 2/3 pi        | +/- 40                 |
+| 2     | +/- 2 pi       | +/- 2/3 pi        | +/- 40                 |
+| 3     | +/- 2 pi       | +/- pi            | +/- 40                 |
+| 4     | +/- 2 pi       | +/- pi            | +/- 40                 |
+| 5     | +/- 2 pi       | +/- pi            | +/- 40                 |
+| 6     | +/- 2 pi       | +/- pi            | +/- 40                 |
 
 ## Issues/todo
 * Scripts should automatically start the controllers they need if they are not
