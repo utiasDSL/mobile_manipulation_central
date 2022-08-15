@@ -25,7 +25,7 @@ def parse_velocity_data(feedback_msgs, cmd_msgs, cmd_ts, idx):
     t0 = cmd_ts[0] - 0.1  # small extra buffer before commands start
     t1 = cmd_ts[-1]
     feedback_msgs = ros_utils.trim_msgs(feedback_msgs, t0=t0, t1=t1)
-    ts, _, vs = ros_utils.parse_feedback_msgs(feedback_msgs)
+    ts, _, vs = ros_utils.parse_ur10_joint_state_msgs(feedback_msgs)
 
     # all of the commands should be the same
     cmd_value = cmd_msgs[0].data[idx]
