@@ -1,5 +1,6 @@
 import sys
 from functools import partial
+import argparse
 
 import numpy as np
 import rosbag
@@ -42,7 +43,7 @@ def parse_velocity_data(feedback_msgs, cmd_msgs, cmd_ts, idx):
     return ts, us, vs
 
 
-def process_one_bag(path, joint_idx):
+def process_one_bag(path, joint_idx, save=False):
     bag = rosbag.Bag(path)
 
     # TODO these topic names are deprecated
@@ -76,7 +77,7 @@ def process_one_bag(path, joint_idx):
         ys_fit1 = -ys_fit1
         ys_fit2 = -ys_fit2
 
-    plt.figure()
+    fig = plt.figure()
 
     # actual output
     plt.plot(ts, ys_actual, label="Actual")
@@ -97,10 +98,19 @@ def process_one_bag(path, joint_idx):
     plt.grid()
     plt.title(f"Joint {joint_idx} Velocity")
 
+    if save:
+        name = f"joint_{joint_idx}_velocity.png"
+        fig.savefig(name)
+        print(f"Saved plot to {name}")
+
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--save", action="store_true", help="Save the plots to files.")
+    args = parser.parse_args()
+
     for i, path in enumerate(BAG_PATHS):
-        process_one_bag(path, i)
+        process_one_bag(path, i, save=args.save)
     plt.show()
 
 

@@ -1,6 +1,7 @@
 """Plot velocity step responses for the Ridgeback base."""
 import sys
 from functools import partial
+import argparse
 
 import numpy as np
 import rosbag
@@ -89,8 +90,17 @@ def process_one_bag(path, joint_idx):
     plt.grid()
     plt.title(f"{JOINT_NAMES[joint_idx]} Velocity")
 
+    if save:
+        name = f"{JOINT_NAMES[joint_idx]} Velocity.png".lower()
+        fig.savefig(name)
+        print(f"Saved plot to {name}")
+
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--save", action="store_true", help="Save the plots to files.")
+    args = parser.parse_args()
+
     for i, path in enumerate(BAG_PATHS):
         process_one_bag(path, i)
     plt.show()
