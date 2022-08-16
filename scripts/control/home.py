@@ -6,28 +6,34 @@ import sys
 import rospy
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
-from mobile_manipulation_central import TrajectoryClient, UR10_JOINT_NAMES, UR10_HOME
+from mobile_manipulation_central import bound_array, load_home_position, MobileManipulatorROSInterface
 
+
+MAX_JOINT_VELOCITY = 0.5
+K = 0.5  # gain
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("name", nargs="?", default="default", help="Name of the home position to move to.")
+    args = parser.parse_args()
+
     rospy.init_node("home")
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "duration", type=float, help="Duration of homing trajectory."
-    )
-    cli_args = parser.parse_args()
+    robot = MobileManipulatorROSInterface()
+    home = load_home_position(args.name)
+    rate = rospy.Rate(125)
 
-    if cli_args.duration < 3.0:
-        print("Home trajectory duration should be at least 3 seconds.")
-        sys.exit(1)
+    # wait until robot feedback has been received
+    while not rospy.is_shutdown() and not robot.ready():
+        rate.sleep()
 
-    trajectory = JointTrajectory()
-    trajectory.joint_names = UR10_JOINT_NAMES
-    point = JointTrajectoryPoint()
-    point.time_from_start = rospy.Duration(cli_args.duration)
-    point.positions = UR10_HOME
-    trajectory.points.append(point)
+    # use P control to navigate to robot home, with limits on the velocity
+    while not rospy.is_shutdown():
+        error = home - robot.q
+        if np.linalg.norm(error) < 1e-3:
+            break
+        cmd_vel = K @ error
+        cmd_vel = bound_array(cmd_vel, lb=-MAX_JOINT_VELOCITY, ub=MAX_JOINT_VELOCITY)
+        robot.publish_cmd_vel(cmd_vel)
 
-    client = TrajectoryClient("scaled_vel_joint_traj_controller")
-    client.send_joint_trajectory(trajectory)
+    print("Done.")

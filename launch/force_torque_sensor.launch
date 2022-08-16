@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+
+<launch>
+  <!-- Start Robotiq force-torque sensor -->
+  <!-- Note that this must be run onboard the robot. -->
+  <node name="ft_sensor" pkg="robotiq_force_torque_sensor" type="rq_sensor" respawn="true" output="screen" />
+</launch>
