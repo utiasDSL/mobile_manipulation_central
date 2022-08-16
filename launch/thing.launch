@@ -3,6 +3,8 @@
 <!-- Launch the Thing driver. -->
 <!-- Currently only launches the UR10 -->
 <launch>
+  <node name="ridgeback_velocity_relay" pkg="topic_tools" type="relay" respawn="true" args="ridgeback_velocity_controller/cmd_vel ridgeback/cmd_vel" output="screen">
+
   <!-- subscribed to by the joint_group_vel_controller -->
   <remap from="joint_group_vel_controller/command" to="cmd_vel" />
 
