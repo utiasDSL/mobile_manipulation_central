@@ -26,7 +26,7 @@ git clone https://github.com/utiasDSL/dsl__projects__mobile_manipulation_central
 ```
 
 Install dependencies into the catkin workspace:
-* [ur_robot_driver](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver) - for the UR10 arm
+* [ur_robot_driver](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver) - for the UR10 arm.
 * [robotiq](https://github.com/TAMS-Group/robotiq) - for the Robotiq 3F gripper. This is a fork of the original (now unmaintained) repo.
 * [vicon_bridge](https://github.com/ethz-asl/vicon_bridge) - required to track
   the position of the mobile base. May also be useful to track other objects,
@@ -64,31 +64,37 @@ Some scripts expect the environment variable
 `MOBILE_MANIPULATION_CENTRAL_BAG_DIR` to point to the directory where bags are
 stored (to create or read bag files). Export this variable in your `.bashrc`.
 
-Start robot drivers:
+Vicon is used to track the base position as well as any other objects in the
+scene. You must be connected to the `DSL_DroneNet_5G` network.
+
+Start the Vicon bridge, UR10 driver, and gripper driver:
 ```
 roslaunch mobile_manipulation_central thing.launch
 ```
+To stream commands to the UR10, you must start the onboard program.
 
-Interaction with the robot is done using
-[ros_control](http://wiki.ros.org/ros_control). In particular:
-* `scaled_vel_joint_traj_controller` is used to track trajectories of waypoints (interpolation between waypoints is done automatically);
-* `joint_group_vel_controller` is used to forward velocity commands directly to the robot (this is the most low-level controller);
-* `joint_state_controller` publishes robot state feedback.
+Interaction with the robot is primarily done using the feedback topics (of type
+`sensor_msgs/JointState`):
+```
+/ridgeback/joint_states
+/ur10/joint_states
+```
+and the velocity command topics
+```
+/ridgeback/cmd_vel  # geometry_msgs/Twist
+/ur10/cmd_vel       # std_msgs/Float64MultiArray
+```
+For Python nodes this is abstracted away using the interfaces in
+`src/mobile_manipulation_central/ros_interface.py`.
 
-Start or stop a particular controller using:
-```
-rosrun controller_manager controller_manager start <controller_name>
-rosrun controller_manager controller_manager stop <controller_name>
-```
+### Scripts
 
-### Vicon
+There are some convenient scripts in the `scripts` directory:
 
-Vicon is used to track the base position as well as any other objects in the
-scene. Run
-```
-roslaunch mobile_manipulation_central vicon.launch
-```
-to connect to Vicon. You must be connected to the `DSL_DroneNet_5G` network.
+* `control/home.py` sends the robot to a particular home configuration, which is taken
+  from `home.yaml`.
+* `control/gripper.py` opens and closes the gripper.
+* `control/sine_trajectory` tracks a sinusoidal trajectory with a single joint.
 
 ## Robot specifications
 
@@ -122,12 +128,8 @@ files (for acceleration), the joint limits are:
   to the Ridgeback when a new connection is made; i.e., when something new
   subscribes or publishes to the `cmd_vel` topic. This appears to be due to
   [this line](https://github.com/ridgeback/ridgeback/blob/melodic-devel/ridgeback_control/src/mecanum_drive_controller.cpp#L281).
-
-## Issues/todo
-* Scripts should automatically start the controllers they need if they are not
-  already running
-* Scripts should automatically read the the robot's current position in order
-  to generate a trajectory from that point
-* Currently `thing.launch` only starts the UR10; eventually it should start
-  whatever is needed for the Ridgeback on the laptop side, as well as the
-  Robotiq force-torque sensor.
+* Start or stop a particular `ros_control` controller using:
+  ```
+  rosrun controller_manager controller_manager start <controller_name>
+  rosrun controller_manager controller_manager stop <controller_name>
+  ```
