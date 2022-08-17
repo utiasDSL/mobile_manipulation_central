@@ -11,16 +11,31 @@ from mobile_manipulation_central import ros_utils
 # TODO add protections if time since last message is too large
 
 
-class RidgebackROSInterface:
-    """ROS interface for the Ridgeback mobile base."""
-    def __init__(self):
-        self.nq = 3
-        self.nv = 3
+class RobotROSInterface:
+    """Base class for defining ROS interfaces for robots."""
+    def __init__(self, nq, nv):
+        self.nq = nq
+        self.nv = nv
 
         self.q = np.zeros(self.nq)
         self.v = np.zeros(self.nv)
 
         self.joint_states_received = False
+        self.last_msg_time = None
+
+    def brake(self):
+        """Brake (stop) the robot."""
+        self.publish_cmd_vel(np.zeros(self.nv))
+
+    def ready(self):
+        """True if joint state messages have been received for both arm and base."""
+        return self.joint_states_received
+
+
+class RidgebackROSInterface(RobotROSInterface):
+    """ROS interface for the Ridgeback mobile base."""
+    def __init__(self):
+        super().__init__(nq=3, nv=3)
 
         self.cmd_pub = rospy.Publisher("/ridgeback/cmd_vel", Twist, queue_size=1)
         self.joint_state_sub = rospy.Subscriber(
@@ -31,11 +46,9 @@ class RidgebackROSInterface:
         """Callback for Ridgeback joint feedback."""
         self.q = np.array(msg.position)
         self.v = np.array(msg.velocity)
-        self.joint_states_received = True
 
-    def ready(self):
-        """True if joint state messages have been received for both arm and base."""
-        return self.joint_states_received
+        self.joint_states_received = True
+        # self.last_msg_time = rospy.Time.now().to_sec()
 
     def publish_cmd_vel(self, cmd_vel):
         """Command the velocity of the robot's joints."""
@@ -48,16 +61,10 @@ class RidgebackROSInterface:
         self.cmd_pub.publish(msg)
 
 
-class UR10ROSInterface:
+class UR10ROSInterface(RobotROSInterface):
     """ROS interface for the UR10 arm."""
     def __init__(self):
-        self.nq = 6
-        self.nv = 6
-
-        self.q = np.zeros(self.nq)
-        self.v = np.zeros(self.nv)
-
-        self.joint_states_received = False
+        super().__init__(nq=6, nv=6)
 
         self.cmd_pub = rospy.Publisher("/ur10/cmd_vel", Float64MultiArray, queue_size=1)
         self.joint_state_sub = rospy.Subscriber(
@@ -69,16 +76,12 @@ class UR10ROSInterface:
         _, self.q, self.v = ros_utils.parse_ur10_joint_state_msg(msg)
         self.joint_states_received = True
 
-    def ready(self):
-        """True if joint state messages have been received for both arm and base."""
-        return self.joint_states_received
-
     def publish_cmd_vel(self, cmd_vel):
         """Command the velocity of the robot's joints."""
         assert cmd_vel.shape == (self.nv,)
 
         msg = Float64MultiArray()
-        msg.data = list(cmd_vel_arm)
+        msg.data = list(cmd_vel)
         self.cmd_pub.publish(msg)
 
 
@@ -91,6 +94,11 @@ class MobileManipulatorROSInterface:
 
         self.nq = self.arm.nq + self.base.nq
         self.nv = self.arm.nv + self.base.nv
+
+    def brake(self):
+        """Brake (stop) the robot."""
+        self.base.brake()
+        self.arm.brake()
 
     def ready(self):
         """True if joint state messages have been received for both arm and base."""

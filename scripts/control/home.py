@@ -70,6 +70,8 @@ def main():
         else:
             robot.publish_cmd_vel(cmd_vel)
 
+    robot.brake()
+
     print(f"Converged to within {np.linalg.norm(error)} of home position.")
 
 

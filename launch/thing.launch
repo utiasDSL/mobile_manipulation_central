@@ -1,18 +1,8 @@
 <?xml version="1.0"?>
 
-<!-- Launch the Thing driver. -->
-<!-- Currently only launches the UR10 -->
+<!-- Launch the Ridgeback, UR10, and gripper. F/T sensor is not launched here because thus far it appears to only work on-board. -->
 <launch>
-  <!-- this is ultimately remapped to /ur10/cmd_vel -->
-  <remap from="joint_group_vel_controller/command" to="cmd_vel" />
-
-  <!-- Launch UR10 driver. -->
-  <!-- namespace is required to avoid conflict with Ridgeback control topics/services -->
-  <include file="$(find ur_robot_driver)/launch/ur10_bringup.launch" ns="ur10">
-    <arg name="robot_ip" default="192.168.131.40"/>
-    <arg name="kinematics_config" default="$(find mobile_manipulation_central)/config/ur10/calibration.yaml"/>
-    <arg name="robot_description_file" value="$(find mobile_manipulation_central)/launch/thing_description.launch" />
-    <arg name="controller_config_file" value="$(find mobile_manipulation_central)/config/ur10/controllers.yaml" />
-    <arg name="controllers" value="joint_state_controller joint_group_vel_controller" />
-  </include>
+  <include file="$(find mobile_manipulation_central)/launch/ridgeback_vicon.launch" />
+  <include file="$(find mobile_manipulation_central)/launch/ur10.launch" />
+  <include file="$(find mobile_manipulation_central)/launch/gripper.launch" />
 </launch>
