@@ -1,48 +1,70 @@
 #!/usr/bin/env python3
 """Script to control the Robotiq 3-finger gripper.
 
-Usage:
-  rosrun mm_gripper gripper.py o|c [delay]
-where
-  "o" means open the gripper
-  "c" means close the gripper
-  delay is the amount of time to wait before doing so (useful if you need to
-  reposition something before it is gripped/released)
+usage:
+  rosrun mm_gripper gripper.py cmd [delay]
+where:
+  cmd can be either "open" or "close"
+  delay is the number of seconds to wait before execution
+
+options:
+  --pinched  use pinched mode
+  --wide     use wide mode
 """
+import argparse
 import sys
 
 import rospy
 from robotiq_3f_gripper_articulated_msgs.msg import Robotiq3FGripperRobotOutput
 
+import IPython
 
-if __name__ == "__main__":
-    open_ = len(sys.argv) > 1 and sys.argv[1][0] == "o"
 
-    if len(sys.argv) > 2:
-        delay = float(sys.argv[2])
-    else:
-        delay = 0
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "cmd", help="Name of the home position to move to.", choices=("open", "close")
+    )
+    parser.add_argument(
+        "delay",
+        help="Seconds to delay before executing the command.",
+        nargs="?",
+        type=float,
+        default=0,
+    )
+    grp = parser.add_mutually_exclusive_group()
+    grp.add_argument("--pinched", help="Pinch mode", action="store_true")
+    grp.add_argument("--wide", help="Wide mode", action="store_true")
+    args = parser.parse_args()
 
-    rospy.init_node("mm_gripper_node")
+    if args.delay < 0:
+        raise ValueError("Delay must be non-negative.")
+
+    rospy.init_node("gripper_node")
     pub = rospy.Publisher(
         "/Robotiq3FGripperRobotOutput", Robotiq3FGripperRobotOutput, queue_size=10
     )
 
-    rospy.sleep(1.0 + delay)
+    rospy.sleep(1.0 + args.delay)
 
     msg = Robotiq3FGripperRobotOutput()
     msg.rACT = 1
 
     # 0 for normal, 1 for pinched, 2 for wide mode, 3 for scissor mode
     # NOTE scissor mode may not be working
-    msg.rMOD = 2
+    if args.pinched:
+        msg.rMOD = 1
+    elif args.wide:
+        msg.rMOD = 2
+    else:
+        msg.rMOD = 0
 
     msg.rGTO = 1
     msg.rATR = 0
     msg.rICF = 0
 
     # position [0, 255]
-    if open_:
+    if args.cmd == "open":
         msg.rPRA = 0
     else:
         msg.rPRA = 255
@@ -52,4 +74,6 @@ if __name__ == "__main__":
 
     pub.publish(msg)
 
-    rospy.sleep(1.0)
+
+if __name__ == "__main__":
+    main()
