@@ -3,9 +3,7 @@
 <!-- Launch the Thing driver. -->
 <!-- Currently only launches the UR10 -->
 <launch>
-  <node name="ridgeback_velocity_relay" pkg="topic_tools" type="relay" respawn="true" args="ridgeback_velocity_controller/cmd_vel ridgeback/cmd_vel" output="screen">
-
-  <!-- subscribed to by the joint_group_vel_controller -->
+  <!-- this is ultimately remapped to /ur10/cmd_vel -->
   <remap from="joint_group_vel_controller/command" to="cmd_vel" />
 
   <!-- Launch UR10 driver. -->
@@ -15,7 +13,6 @@
     <arg name="kinematics_config" default="$(find mobile_manipulation_central)/config/ur10/calibration.yaml"/>
     <arg name="robot_description_file" value="$(find mobile_manipulation_central)/launch/thing_description.launch" />
     <arg name="controller_config_file" value="$(find mobile_manipulation_central)/config/ur10/controllers.yaml" />
-    <arg name="controllers" value="joint_state_controller" />
-    <arg name="stopped_controllers" value="scaled_vel_joint_traj_controller joint_group_vel_controller" />
+    <arg name="controllers" value="joint_state_controller joint_group_vel_controller" />
   </include>
 </launch>

@@ -8,6 +8,9 @@
     <param name="tf_ref_frame_id" value="/odom" type="str" />
   </node>
 
-  <!-- Parsing the estimation of Ridgeback joint state from Vicon messages. -->
+  <!-- Republish Vicon /ridgeback/cmd_vel to /ridgeback_velocity_controller/cmd_vel -->
+  <node name="ridgeback_velocity_relay" pkg="topic_tools" type="relay" respawn="true" args="ridgeback/cmd_vel ridgeback_velocity_controller/cmd_vel" output="screen" />
+
+  <!-- Estimation of Ridgeback joint state from Vicon messages. -->
   <node pkg="mobile_manipulation_central" type="ridgeback_vicon_estimator_node" name="ridgeback_vicon_estimator_node" required="true" output="screen" />
 </launch>

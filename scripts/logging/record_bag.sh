@@ -4,6 +4,7 @@ mkdir -p "$BAG_DIR"
 
 rosbag record -o "$BAG_DIR/$1" \
   /clock \
+  --regex "/ridgeback/(.*)" \
   --regex "/ridgeback_velocity_controller/(.*)" \
   --regex "/ur10/(.*)" \
   --regex "/vicon/(.*)"

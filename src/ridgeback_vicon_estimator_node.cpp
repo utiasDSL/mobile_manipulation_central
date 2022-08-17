@@ -32,6 +32,8 @@ class RidgebackViconEstimatorNode {
         // dsl__estimation__vicon package.
         linear_velocity_filter.init(0.045, Eigen::Vector2d::Zero());
         angular_velocity_filter.init(0.025, 0);
+
+        return true;
     }
 
    private:
@@ -111,6 +113,7 @@ int main(int argc, char** argv) {
 
     RidgebackViconEstimatorNode node;
     node.start(nh);
+    ros::spin();
 
     return 0;
 }
