@@ -63,12 +63,15 @@ def main():
         error = home - robot.q
         if np.linalg.norm(error) < CONVERGENCE_TOL:
             break
+
         cmd_vel = P_GAIN * error
         cmd_vel = mm.bound_array(cmd_vel, lb=-MAX_JOINT_VELOCITY, ub=MAX_JOINT_VELOCITY)
         if args.dry_run:
             print(cmd_vel)
         else:
             robot.publish_cmd_vel(cmd_vel)
+
+        rate.sleep()
 
     robot.brake()
 

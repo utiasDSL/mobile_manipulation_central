@@ -28,7 +28,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "joint_index",
-        help="Index of the arm joint to actuate with the sine trajectory",
+        help="Index of the robot joint to actuate with the sine trajectory",
         type=int,
     )
     parser.add_argument(
@@ -40,7 +40,7 @@ def main():
 
     rospy.init_node("sine_trajectory")
 
-    robot = mm.UR10ROSInterface()
+    robot = mm.MobileManipulatorROSInterface()
 
     # wait until robot feedback has been received
     rate = rospy.Rate(RATE)
@@ -66,6 +66,8 @@ def main():
             print(cmd_vel)
         else:
             robot.publish_cmd_vel(cmd_vel)
+
+        rate.sleep()
         t = rospy.Time.now().to_sec()
 
     robot.brake()
