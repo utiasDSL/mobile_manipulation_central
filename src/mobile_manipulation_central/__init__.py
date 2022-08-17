@@ -5,7 +5,6 @@ import numpy as np
 import rospkg
 import yaml
 
-from mobile_manipulation_central.ur10 import UR10_JOINT_NAMES, UR10_JOINT_INDEX_MAP
 from mobile_manipulation_central.trajectory_client import TrajectoryClient
 from mobile_manipulation_central.ros_utils import (
     msg_time,
@@ -13,7 +12,7 @@ from mobile_manipulation_central.ros_utils import (
     parse_ur10_joint_state_msgs,
     trim_msgs,
 )
-from mobile_manipulation_central.mobile_manipulator_ros_interface import (
+from mobile_manipulation_central.ros_interface import (
     RidgebackROSInterface,
     UR10ROSInterface,
     MobileManipulatorROSInterface,
