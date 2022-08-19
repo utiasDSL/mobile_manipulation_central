@@ -1,4 +1,6 @@
 """General ROS parsing utilities."""
+import subprocess
+import tempfile
 import numpy as np
 from spatialmath import UnitQuaternion
 
@@ -122,3 +124,15 @@ def parse_ridgeback_vicon_msgs(msgs):
         ts.append(t)
         qs.append(q)
     return np.array(ts), np.array(qs)
+
+
+def compile_xacro(xacro_path):
+    """Compile a xacro file into raw URDF."""
+    with tempfile.NamedTemporaryFile() as f:
+        # compile xacro to the tempfile
+        cmd = ["xacro", str(xacro_path), "-o", f.name]
+        res = subprocess.run(cmd, capture_output=True)
+
+        # read the content of the tempfile
+        f.seek(0)
+        return f.read()

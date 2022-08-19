@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   geometry_msgs
   sensor_msgs
+  pybind11_catkin
 )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -42,6 +43,14 @@ include_directories(
  ${EIGEN3_INCLUDE_DIRS}
 )
 
+pybind11_add_module(bindings SHARED
+  src/pybindings.cpp
+)
+target_link_libraries(bindings PRIVATE
+  ${catkin_LIBRARIES}
+)
+# add_dependencies(bindings ${catkin_EXPORTED_TARGETS})
+
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/mobile_manipulation_central.cpp
@@ -53,18 +62,6 @@ include_directories(
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_executable(ridgeback_vicon_estimator_node src/ridgeback_vicon_estimator_node.cpp)
-
-## Rename C++ executable without prefix
-## The above recommended prefix causes long target names, the following renames the
-## target back to the shorter version for ease of user use
-## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
 target_link_libraries(ridgeback_vicon_estimator_node
   ${catkin_LIBRARIES}
 )
@@ -72,6 +69,14 @@ target_link_libraries(ridgeback_vicon_estimator_node
 #############
 ## Install ##
 #############
+
+install(TARGETS bindings
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+)
+set_target_properties(bindings
+    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+)
 
 # all install targets should use catkin DESTINATION variables
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html

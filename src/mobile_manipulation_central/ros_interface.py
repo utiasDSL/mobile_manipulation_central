@@ -21,7 +21,6 @@ class RobotROSInterface:
         self.v = np.zeros(self.nv)
 
         self.joint_states_received = False
-        self.last_msg_time = None
 
     def brake(self):
         """Brake (stop) the robot."""
@@ -48,7 +47,6 @@ class RidgebackROSInterface(RobotROSInterface):
         self.v = np.array(msg.velocity)
 
         self.joint_states_received = True
-        # self.last_msg_time = rospy.Time.now().to_sec()
 
     def publish_cmd_vel(self, cmd_vel):
         """Command the velocity of the robot's joints."""

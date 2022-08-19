@@ -9,7 +9,7 @@ from controller_manager_msgs.srv import SwitchControllerRequest, SwitchControlle
 from controller_manager_msgs.srv import LoadControllerRequest, LoadController
 import geometry_msgs.msg as geometry_msgs
 
-from mobile_manipulation_central.ur10 import UR10_JOINT_NAMES
+from mobile_manipulation_central.ros_utils import UR10_JOINT_NAMES
 
 
 JOINT_TRAJECTORY_CONTROLLERS = [
