@@ -3,6 +3,8 @@
 This repository contains shared code for running experiments with the "Thing"
 mobile manipulator.
 
+## System Information
+
 ### Hardware
 
 The robot consists of a UR10 manipulator mounted on a Ridgeback omnidirectional
@@ -16,6 +18,11 @@ manipulation.
 
 The Ridgeback is currently running Ubuntu 20.04 on its onboard computer. The
 UR10 is running firmware version 3.15.
+
+## Documentation
+
+Manuals and datasheets, as well as other documents, can be found in the `docs`
+directory.
 
 ## Installation and setup
 
