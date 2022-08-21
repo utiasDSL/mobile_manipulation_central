@@ -3,6 +3,7 @@ import subprocess
 import tempfile
 import numpy as np
 from spatialmath import UnitQuaternion
+import xacro
 
 
 UR10_JOINT_NAMES = [
@@ -128,11 +129,4 @@ def parse_ridgeback_vicon_msgs(msgs):
 
 def compile_xacro(xacro_path):
     """Compile a xacro file into raw URDF."""
-    with tempfile.NamedTemporaryFile() as f:
-        # compile xacro to the tempfile
-        cmd = ["xacro", str(xacro_path), "-o", f.name]
-        res = subprocess.run(cmd, capture_output=True)
-
-        # read the content of the tempfile
-        f.seek(0)
-        return f.read()
+    return xacro.process_file(xacro_path).toxml()

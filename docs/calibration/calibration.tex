@@ -1,0 +1,109 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{parskip}
+\usepackage{amssymb,amsfonts,amsmath,amscd}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage[pdftex]{graphicx}
+\usepackage{url}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{float}
+
+% for typesetting in-text numbers and units
+\usepackage{siunitx}
+
+% Table stuff.
+\usepackage{booktabs}
+\usepackage{makecell}
+\usepackage{multirow}
+
+% biblatex for bibliography
+\usepackage[
+backend=biber,
+maxcitenames=1,
+style=authoryear,
+]{biblatex}
+
+% \addbibresource{bibliography.bib}
+
+\DeclareMathOperator*{\argmin}{argmin}
+
+\title{Mobile Manipulation Calibration}
+\author{Adam Heins}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The frames of interest are listed in Table~\ref{tab:frames}.
+
+\begin{table}[h]
+  \caption{Coordinate frames.}
+  \centering
+    \begin{tabular}{l c}
+      \toprule
+      Name & Subscript \\
+      \midrule
+      World        & $w$ \\
+      Mobile base  & $b$ \\
+      Base of arm  & $a$ \\
+      End effector & $e$  \\
+      Tool         & $t$ \\
+      \bottomrule
+    \end{tabular}
+  \label{tab:frames}
+\end{table}
+
+The pose~$\bm{T}_{wt}$ of an arbitrary tool attached to the end effector can be
+computed using the sequence of transforms
+\begin{equation}\label{eq:kinematic_chain}
+  \bm{T}_{wt} = \bm{T}_{wb}(\bm{q}_b)\bm{T}_{ba}\bm{T}_{ae}(\bm{q}_a)\bm{T}_{et},
+\end{equation}
+where~$\bm{T}_{wb}$ depends on the base
+configuration~$\bm{q}_b=[x_b,y_b,\theta_b]^T$ and~$\bm{T}_{ae}$ depends on the
+arm configuration~$\bm{q}_a$.
+
+\section{Base Calibration}
+
+We need to calibration the Vicon measured base poses~$\hat{\bm{q}}_b$ so that
+the origin of~$\bm{T}_{wb}$ is correct. We have
+\begin{equation}
+  \bm{T}_{wb}(\bm{q}_b) = \begin{bmatrix}
+    \bm{C}_z(\theta_b) & \bm{r}_b \\
+    \bm{0}^T & 1
+  \end{bmatrix},
+\end{equation}
+where~$\bm{C}_z(\theta)\in SO(3)$ is a rotation about the $z$-axis
+and~$\bm{r}_b=[x_b,y_b,z_b]^T$ with~$z_b$ a constant. Our goal in this section
+is to calibrate the origin~$(x_b,y_b)$ so that it is located at the point of
+rotation of~$\theta_b$.
+
+Given a starting configuration~$\bm{q}_{b,0}$, we will move the base to a
+sequence of desired configurations~$\bm{q}^d_{b,i}$ and obtain the
+corresponding measured configurations~$\hat{\bm{q}}_{b,i}$\footnote{In
+practice, we need only use desired configurations that differ in rotation; the
+position is arbitrary and can remain fixed.}. We would like to find an
+offset~$\Delta\bm{q}_b$ such that
+\begin{equation}
+  \bm{q}^d_{b,i} = \hat{\bm{q}}_{b,i} + \Delta\bm{q}_b
+\end{equation}
+is satisfied as closely as possible for each~$i$. We will do so by solving the
+least squares problem
+\begin{equation}\label{eq:contact_force_formulation}
+  \begin{aligned}
+    \argmin_{\Delta\bm{q}_b}\ & \frac{1}{2}\sum_i\|\bm{q}^d_{b,i} - \hat{\bm{q}}_{b,i} - \Delta\bm{q}_b\|^2.
+  \end{aligned}
+\end{equation}
+
+% Specifically, the origin should be at
+% the point of rotation of~$\theta_b$, so that
+
+\section{Arm--End Effector--Tool Calibration}
+
+
+\end{document}
