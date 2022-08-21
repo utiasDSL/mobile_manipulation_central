@@ -83,27 +83,42 @@ and~$\bm{r}_b=[x_b,y_b,z_b]^T$ with~$z_b$ a constant. Our goal in this section
 is to calibrate the origin~$(x_b,y_b)$ so that it is located at the point of
 rotation of~$\theta_b$.
 
-Given a starting configuration~$\bm{q}_{b,0}$, we will move the base to a
-sequence of desired configurations~$\bm{q}^d_{b,i}$ and obtain the
-corresponding measured configurations~$\hat{\bm{q}}_{b,i}$\footnote{In
-practice, we need only use desired configurations that differ in rotation; the
-position is arbitrary and can remain fixed.}. We would like to find an
-offset~$\Delta\bm{q}_b$ such that
+Starting at an arbitrary configuration~$\bm{q}_{b,0}$, we will move the base to
+a sequence of desired yaw angles~$\theta^d_{b,i}$ and obtain the corresponding
+measured configurations~$\hat{\bm{q}}_{b,i}$. We would like to find an
+offset~$\Delta\bm{r}_b$ such that
 \begin{equation}
-  \bm{q}^d_{b,i} = \hat{\bm{q}}_{b,i} + \Delta\bm{q}_b
+  \bm{r}^d_{b,i} = \hat{\bm{r}}_{b,i} + \Delta\bm{r}_b
 \end{equation}
 is satisfied as closely as possible for each~$i$. We will do so by solving the
 least squares problem
 \begin{equation}\label{eq:contact_force_formulation}
-  \begin{aligned}
-    \argmin_{\Delta\bm{q}_b}\ & \frac{1}{2}\sum_i\|\bm{q}^d_{b,i} - \hat{\bm{q}}_{b,i} - \Delta\bm{q}_b\|^2.
-  \end{aligned}
+  \argmin_{\Delta\bm{r}_b}\ \frac{1}{2}\sum_i\|\bm{r}_{b,0} - \hat{\bm{r}}_{b,i} - \Delta\bm{r}_b\|^2,
 \end{equation}
-
-% Specifically, the origin should be at
-% the point of rotation of~$\theta_b$, so that
+where we've used the fact that~$\bm{r}^d_{b,i}=\bm{r}_{b,0}$.
 
 \section{Arm--End Effector--Tool Calibration}
+
+Having calibrated the base pose~$\bm{T}_{wb}$, we now wish to calibrate
+(static) the transforms between the base and arm~$\bm{T}_{ba}$ and the EE and
+tool~$\bm{T}_{et}$. We will assume that factory calibration for the arm
+transform~$\bm{T}_{ae}(\bm{q}_a)$ is good enough.
+
+To do so, we will collect a sequence of
+pairs~$(\bm{q}_{a,i},\hat{\bm{T}}_{wt,i})$ by moving the arm to the sequence of
+configurations~$\bm{q}_{a,i}$. We will then solve the (nonlinear) least squares
+problem\footnote{We may have nominal guesses for the transforms, in which case
+we would actually optimize over (for example)~$\Delta\bm{T}_{ba}$,
+where~$\bm{T}_{ba}=\Delta\bm{T}_{ba}\bar{\bm{T}}_{ba}$ with nominal
+guess~$\bar{\bm{T}}_{ba}$.}
+\begin{equation}
+  \argmin_{\bm{T}_{ba},\bm{T}_{wt}}\ \frac{1}{2}\sum_i\|\boxminus(\bm{T}_{wt}(\bm{q}),\hat{\bm{T}}_{wt})\|^2.
+\end{equation}
+over the manifold~$SE(3)$, where~$\bm{T}_{wt}$ is computed using~\eqref{eq:kinematic_chain} and
+\begin{equation}
+  \boxminus(\bm{T}_1,\bm{T}_2) = \log(\bm{T}_1^{-1}\bm{T}_2)^\vee
+\end{equation}
+is the error between the poses.
 
 
 \end{document}

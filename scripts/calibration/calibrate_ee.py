@@ -1,56 +1,29 @@
-import rospy
-import numpy as np
-from geometry_msgs.msg import TransformStamped
+#!/usr/bin/env python3
+"""Calibrate the arm using data collected with `collect_arm_calibration_data.py`.
 
-import mobile_manipulation_central as mm
+Generates an offset Δq_b to the measured configurations such that the desired
+configurations are as close as possible to the measured ones in the sense of
+least squares.
+"""
+import argparse
+
+import numpy as np
 
 import IPython
 
 
-class ViconObject:
-    def __init__(self, name):
-        topic = "/vicon/" + name + "/" + name
-        self.msg_received = False
-        self.sub = rospy.Subscriber(topic, TransformStamped, self._transform_cb)
-
-    def ready(self):
-        return self.msg_received
-
-    def _transform_cb(self, msg):
-        L = msg.translation.translation
-        R = msg.translation.rotation
-
-        self.position = np.array([L.x, L.y, L.z])
-        self.orientation = np.array([R.x, R.y, R.z, R.w])
-
-        self.msg_received = True
-
-
 def main():
-    model = mm.MobileManipulatorKinematics()
-    link_idx = model.model.getBodyId("base_link")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("filename", help="npz file containing the calibration data.")
+    args = parser.parse_args()
 
-    q = np.array([-2.0, -1.0, 0, 1.5708, -0.7854,  1.5708, -0.7854,  1.5708, 1.3100])
-    model.forward(q)
-
-    r, Q = model.link_pose(link_idx)
-
-    IPython.embed()
-    return
-
-    rospy.init_node("calibration")
-
-    robot = mm.MobileManipulatorROSInterface()
-    obj = ViconObject("BoxTray")
-
-    # wait until robot feedback has been received
-    while not rospy.is_shutdown() and not (robot.ready() and obj.ready()):
-        rate.sleep()
-
-    q = robot.q.copy()
-    model.forward(q)
-    r_ee, Q_ee = robot.link_pose()
-    r_obj, Q_obj = obj.position, obj.orientation
+    # load calibration data
+    data = np.load(args.filename)
+    qs = data["qs"]
+    qds = data["qds"]
+    rs = data["rs"]
+    Qs = data["Qs"]
+    num_configs = qs.shape[0]
 
     IPython.embed()
 

@@ -19,14 +19,14 @@ def main():
     data = np.load(args.filename)
     q0 = data["q0"]
     qs = data["qs"]
-    qds = data["qds"]
+    # qds = data["qds"]
     num_configs = qs.shape[0]
 
     # construct least squares problem
-    A = np.tile(np.eye(3), (num_configs, 1))
-    b = np.zeros(3 * num_configs)
+    A = np.tile(np.eye(2), (num_configs, 1))
+    b = np.zeros(2 * num_configs)
     for i in range(num_configs):
-        b[i*3:i*3+3] = qds[i, :] - qs[i, :]
+        b[i*2:i*2+2] = q0[:2] - qs[i, :2]
 
     # solve for optimal offset
     Δq, _, _, _ = np.linalg.lstsq(A, b, rcond=None)
