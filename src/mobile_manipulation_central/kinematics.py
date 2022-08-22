@@ -9,6 +9,7 @@ from mobile_manipulation_central.ros_utils import compile_xacro
 
 class RobotKinematics:
     def __init__(self, nq, nv, urdf_str, root_joint=None, tool_link_name=None):
+        """Load the model from a URDF represented as a string."""
         self.nq = nq
         self.nv = nv
 
@@ -161,11 +162,14 @@ class RobotKinematics:
 
 
 class MobileManipulatorKinematics(RobotKinematics):
-    def __init__(self, filename="thing_no_wheels.urdf.xacro"):
+    def __init__(
+        self, filename="thing_no_wheels.urdf.xacro", tool_link_name="gripped_object"
+    ):
         rospack = rospkg.RosPack()
         xacro_path = (
             Path(rospack.get_path("mobile_manipulation_central"))
-            / "urdf/xacro" / filename
+            / "urdf/xacro"
+            / filename
         )
         urdf_str = compile_xacro(xacro_path)
 
@@ -180,5 +184,5 @@ class MobileManipulatorKinematics(RobotKinematics):
             nv=9,
             urdf_str=urdf_str,
             root_joint=root_joint,
-            tool_link_name="gripper",
+            tool_link_name=tool_link_name,
         )

@@ -32,6 +32,9 @@ joints.
     <color rgba="1.0 0.0 0.0 0.25"/>
   </material>
 
+  <xacro:property name="transform_parameters_file" value="$(find mobile_manipulation_central)/config/ur10/transforms.yaml"/>
+  <xacro:property name="config_transform_parameters" value="${load_yaml(transform_parameters_file)}"/>
+
   <link name="base_link">
 	 <inertial>
      <mass value="0.01"/>
@@ -39,8 +42,13 @@ joints.
      <origin rpy="0 0 0" xyz="0 0 0"/>
     </inertial>
   </link>
+  <!-- <joint name="base_link_joint" type="fixed"> -->
+  <!--   <origin rpy="0 0 0" xyz="0 0 0"/> -->
+  <!--   <parent link="base_link"/> -->
+  <!--   <child link="chassis_link"/> -->
+  <!-- </joint> -->
   <joint name="base_link_joint" type="fixed">
-    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <origin rpy="${config_transform_parameters['T1']['rpy'][0]} ${config_transform_parameters['T1']['rpy'][1]} ${config_transform_parameters['T1']['rpy'][2]}" xyz="${config_transform_parameters['T1']['xyz'][0]} ${config_transform_parameters['T1']['xyz'][1]} ${config_transform_parameters['T1']['xyz'][2]}"/>
     <parent link="base_link"/>
     <child link="chassis_link"/>
   </joint>
@@ -224,6 +232,14 @@ joints.
     <origin rpy="0 0 0.2617993877991494" xyz="0 0.0 0"/>
     <parent link="ur10_arm_tool0"/>
     <child link="gripper"/>
+  </joint>
+
+  <!-- Extra link for the gripped object, which must be calibrated. -->
+  <link name="gripped_object" />
+  <joint name="gripped_object_joint" type="fixed">
+    <origin rpy="${config_transform_parameters['T2']['rpy'][0]} ${config_transform_parameters['T2']['rpy'][1]} ${config_transform_parameters['T2']['rpy'][2]}" xyz="${config_transform_parameters['T2']['xyz'][0]} ${config_transform_parameters['T2']['xyz'][1]} ${config_transform_parameters['T2']['xyz'][2]}"/>
+    <parent link="gripper"/>
+    <child link="gripped_object"/>
   </joint>
 
 </robot>

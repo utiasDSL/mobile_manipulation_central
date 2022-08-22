@@ -12,6 +12,7 @@ import rospy
 import numpy as np
 
 import mobile_manipulation_central as mm
+import mobile_manipulation_central.bindings as bindings
 
 
 MAX_JOINT_VELOCITY = 0.2
@@ -39,6 +40,7 @@ def main():
     args = parser.parse_args()
 
     rospy.init_node("home")
+    nh = bindings.init_node("home")
 
     home = mm.load_home_position(args.name)
 
@@ -47,8 +49,8 @@ def main():
         robot = mm.UR10ROSInterface()
         home = home[-robot.nq :]
     elif args.base_only:
-        robot = mm.RidgebackROSInterface()
-        home = home[: robot.nq]
+        robot = bindings.RidgebackROSInterface(nh)
+        home = home[: robot.nq()]
     else:
         robot = mm.MobileManipulatorROSInterface()
 
@@ -60,7 +62,7 @@ def main():
 
     # use P control to navigate to robot home, with limits on the velocity
     while not rospy.is_shutdown():
-        error = home - robot.q
+        error = home - robot.q()
         if np.linalg.norm(error) < CONVERGENCE_TOL:
             break
 
