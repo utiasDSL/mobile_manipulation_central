@@ -14,6 +14,7 @@ from mobile_manipulation_central.ros_utils import (
     compile_xacro,
 )
 from mobile_manipulation_central.ros_interface import (
+    ViconObjectInteface,
     RidgebackROSInterface,
     UR10ROSInterface,
     MobileManipulatorROSInterface,

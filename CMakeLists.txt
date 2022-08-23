@@ -7,7 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   geometry_msgs
   sensor_msgs
-  pybind11_catkin
+  # pybind11_catkin
 )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -43,13 +43,13 @@ include_directories(
  ${EIGEN3_INCLUDE_DIRS}
 )
 
-pybind11_add_module(bindings SHARED
-  src/pybindings.cpp
-)
-target_link_libraries(bindings PRIVATE
-  ${catkin_LIBRARIES}
-)
-# add_dependencies(bindings ${catkin_EXPORTED_TARGETS})
+# NOTE: bindings are not currently useful, so not built
+# pybind11_add_module(bindings SHARED
+#   src/pybindings.cpp
+# )
+# target_link_libraries(bindings PRIVATE
+#   ${catkin_LIBRARIES}
+# )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}

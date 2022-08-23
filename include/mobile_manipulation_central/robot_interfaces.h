@@ -13,6 +13,8 @@ std::map<std::string, size_t> JOINT_INDEX_MAP = {
     {"ur10_arm_elbow_joint", 2},        {"ur10_arm_wrist_1_joint", 3},
     {"ur10_arm_wrist_2_joint", 4},      {"ur10_arm_wrist_3_joint", 5}};
 
+// TODO make a corresponding Vicon object class
+
 class RobotROSInterface {
    public:
     RobotROSInterface(size_t nq, size_t nv) : nq_(nq), nv_(nv) {

@@ -12,11 +12,8 @@ import datetime
 
 import rospy
 import numpy as np
-from geometry_msgs.msg import TransformStamped
 
 import mobile_manipulation_central as mm
-
-import IPython
 
 
 MAX_JOINT_VELOCITY = 0.2
@@ -42,32 +39,11 @@ DESIRED_ARM_CONFIGURATIONS = np.array([
 # fmt: on
 
 
-# TODO move this somewhere convenient
-class ViconObject:
-    def __init__(self, name):
-        topic = "/vicon/" + name + "/" + name
-        self.msg_received = False
-        self.sub = rospy.Subscriber(topic, TransformStamped, self._transform_cb)
-
-    def ready(self):
-        return self.msg_received
-
-    def _transform_cb(self, msg):
-        L = msg.transform.translation
-        Q = msg.transform.rotation
-
-        self.position = np.array([L.x, L.y, L.z])
-        self.orientation = np.array([Q.x, Q.y, Q.z, Q.w])
-
-        self.msg_received = True
-
-
 def average_quaternion(Qs):
     """Compute the average of a 2D array of quaternions, one per row."""
     Qs = np.array(Qs)
     e, V = np.linalg.eig(Qs.T @ Qs)
     i = np.argmax(e)
-    print(f"e = {e}\nV = {V}\ni = {i}")
     return V[:, i]
 
 
@@ -107,7 +83,7 @@ def main():
 
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     robot = mm.MobileManipulatorROSInterface()
-    vicon = ViconObject("BoxTray")
+    vicon = mm.ViconObjectInterface("BoxTray")
     rate = rospy.Rate(RATE)
 
     # wait until robot and Vicon feedback has been received
