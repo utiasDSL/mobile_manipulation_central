@@ -3,6 +3,12 @@
 <!-- Launch UR10 driver. -->
 <launch>
   <!-- We don't use kinematics_params here but it is passed in by the UR driver infrastructure so we need to acknowledge it. -->
-  <arg name="kinematics_params" />
-  <param name="robot_description" command="$(find xacro)/xacro $(find mobile_manipulation_central)/urdf/xacro/thing.urdf.xacro" />
+  <arg name="kinematics_params" default="$(find mobile_manipulation_central)/config/ur10/kinematics_parameters.yaml" />
+  <arg name="visual_params" default="$(find mobile_manipulation_central)/config/ur10/visual_parameters.yaml" />
+  <arg name="transform_params" default="$(find mobile_manipulation_central)/config/ur10/transforms.yaml" />
+
+  <param name="robot_description" command="$(find xacro)/xacro '$(find mobile_manipulation_central)/urdf/xacro/thing.urdf.xacro'
+    kinematics_params:=$(arg kinematics_params)
+    visual_params:=$(arg visual_params)
+    transform_params:=$(arg transform_params)" />
 </launch>

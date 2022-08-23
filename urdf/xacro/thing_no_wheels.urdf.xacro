@@ -32,8 +32,20 @@ joints.
     <color rgba="1.0 0.0 0.0 0.25"/>
   </material>
 
-  <xacro:property name="transform_parameters_file" value="$(find mobile_manipulation_central)/config/ur10/transforms.yaml"/>
-  <xacro:property name="config_transform_parameters" value="${load_yaml(transform_parameters_file)}"/>
+  <xacro:arg name="kinematics_params" default="$(find mobile_manipulation_central)/config/ur10/kinematics_parameters.yaml"/>
+  <xacro:arg name="visual_params" default="$(find mobile_manipulation_central)/config/ur10/visual_parameters.yaml"/>
+  <xacro:arg name="transform_params" default="$(find mobile_manipulation_central)/config/ur10/transforms.yaml"/>
+
+  <!-- Load the base and tool transforms -->
+  <xacro:property name="transform_params_file" value="$(arg transform_params)" />
+  <xacro:property name="config_transform_parameters" value="${load_yaml(transform_params_file)}"/>
+
+  <!-- Macro to use a transform from `config_transform_parameters` as the origin. -->
+  <xacro:macro name="transformed_origin" params="name">
+    <xacro:property name="T" value="${config_transform_parameters[name]}" />
+    <origin rpy="${T['rpy'][0]} ${T['rpy'][1]} ${T['rpy'][2]}"
+            xyz="${T['xyz'][0]} ${T['xyz'][1]} ${T['xyz'][2]}"/>
+  </xacro:macro>
 
   <link name="base_link">
 	 <inertial>
@@ -48,7 +60,7 @@ joints.
   <!--   <child link="chassis_link"/> -->
   <!-- </joint> -->
   <joint name="base_link_joint" type="fixed">
-    <origin rpy="${config_transform_parameters['T1']['rpy'][0]} ${config_transform_parameters['T1']['rpy'][1]} ${config_transform_parameters['T1']['rpy'][2]}" xyz="${config_transform_parameters['T1']['xyz'][0]} ${config_transform_parameters['T1']['xyz'][1]} ${config_transform_parameters['T1']['xyz'][2]}"/>
+    <xacro:transformed_origin name="T1" />
     <parent link="base_link"/>
     <child link="chassis_link"/>
   </joint>
@@ -198,8 +210,8 @@ joints.
   <xacro:include filename="$(find ur_description)/urdf/inc/ur10_macro.xacro"/>
   <xacro:ur10_robot
     prefix="ur10_arm_"
-    visual_parameters_file="$(find mobile_manipulation_central)/config/ur10/visual_parameters.yaml"
-    kinematics_parameters_file="$(find mobile_manipulation_central)/config/ur10/calibration.yaml"
+    visual_parameters_file="$(arg visual_params)"
+    kinematics_parameters_file="$(arg kinematics_params)"
   />
 
   <!-- Join arm to the base -->
@@ -237,7 +249,7 @@ joints.
   <!-- Extra link for the gripped object, which must be calibrated. -->
   <link name="gripped_object" />
   <joint name="gripped_object_joint" type="fixed">
-    <origin rpy="${config_transform_parameters['T2']['rpy'][0]} ${config_transform_parameters['T2']['rpy'][1]} ${config_transform_parameters['T2']['rpy'][2]}" xyz="${config_transform_parameters['T2']['xyz'][0]} ${config_transform_parameters['T2']['xyz'][1]} ${config_transform_parameters['T2']['xyz'][2]}"/>
+    <xacro:transformed_origin name="T2" />
     <parent link="gripper"/>
     <child link="gripped_object"/>
   </joint>
