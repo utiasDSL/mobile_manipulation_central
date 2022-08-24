@@ -12,7 +12,6 @@ import rospy
 import numpy as np
 
 import mobile_manipulation_central as mm
-import mobile_manipulation_central.bindings as bindings
 
 
 MAX_JOINT_VELOCITY = 0.2
