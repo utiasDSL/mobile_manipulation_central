@@ -14,10 +14,15 @@ from mobile_manipulation_central.ros_utils import (
     compile_xacro,
 )
 from mobile_manipulation_central.ros_interface import (
-    ViconObjectInteface,
+    ViconObjectInterface,
     RidgebackROSInterface,
     UR10ROSInterface,
     MobileManipulatorROSInterface,
+)
+from mobile_manipulation_central.simulation_ros_interface import (
+    SimulatedRidgebackROSInterface,
+    SimulatedUR10ROSInterface,
+    SimulatedMobileManipulatorROSInterface,
 )
 from mobile_manipulation_central.kinematics import MobileManipulatorKinematics
 
