@@ -246,12 +246,12 @@ joints.
     <child link="gripper"/>
   </joint>
 
-  <!-- Extra link for the gripped object, which must be calibrated. -->
-  <link name="gripped_object" />
-  <joint name="gripped_object_joint" type="fixed">
-    <xacro:transformed_origin name="T2" />
-    <parent link="gripper"/>
-    <child link="gripped_object"/>
-  </joint>
+  <!-- If you want to have an object as part of the URDF, include something like: -->
+  <!-- <link name="gripped_object" /> -->
+  <!-- <joint name="gripped_object_joint" type="fixed"> -->
+  <!--   <xacro:transformed_origin name="T2" /> -->
+  <!--   <parent link="gripper"/> -->
+  <!--   <child link="gripped_object"/> -->
+  <!-- </joint> -->
 
 </robot>
