@@ -12,6 +12,16 @@ def simulate_second_order_system(ts, ωn, ζ, us, k=1):
     return ys
 
 
+# def simulate_second_order_system2(ts, ωn, ζ, td, us, k=1):
+#     """Simulate a second-order system with parameters (k, ωn, ζ) and inputs us at times ts."""
+#     sys = signal.TransferFunction(k * (ωn ** 2), [1, 2 * ζ * ωn, ωn ** 2])
+#     # TODO what I want is to get the ys corresponding to the input ts...
+#     ts_out, ys, _ = signal.lsim2(sys, U=us, T=ts+td)
+#     import IPython
+#     IPython.embed()
+#     return ys, ts_out
+
+
 def simulate_first_order_system(ts, τ, us, k=1):
     """Simulate a second-order system with parameters (k, ωn, ζ) and inputs us at times ts."""
     sys = signal.TransferFunction(k, [τ, 1])
@@ -35,19 +45,25 @@ def identify_first_order_system(ts, us, ys, method="trf", p0=[1.0]):
     return τ
 
 
-def identify_second_order_system(ts, us, ys, method="trf", p0=[10.0, 0.1]):
+def identify_second_order_system(ts, us, ys, step, method="trf", p0=(10.0, 0.1, 0)):
     """Fit a second-order model to the inputs us and outputs ys at times ts."""
     # bounds: assume system is not overdamped
-    bounds = ([0, 0], [np.inf, 1.0])
-    model = partial(simulate_second_order_system, us=us)
-    (ωn, ζ), covariance = optimize.curve_fit(
+    bounds = ([0, 0, 0], [np.inf, 1.0, np.inf])
+
+    def model(ts, ωn, ζ, td):
+        us2 = step.sample(ts, td=td)
+        ys_sim = simulate_second_order_system(ts, ωn, ζ, us2)
+        return ys_sim
+
+    (ωn, ζ, td), covariance = optimize.curve_fit(
         model,
         ts,
         ys,
         method=method,
         p0=p0,
         bounds=bounds,
+        # sigma=0.1 * np.ones_like(ys),
     )
-    return ωn, ζ
+    return ωn, ζ, td
 
 

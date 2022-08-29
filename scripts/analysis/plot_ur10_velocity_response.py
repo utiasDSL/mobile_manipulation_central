@@ -21,11 +21,25 @@ BAG_PATHS = [
 ]
 
 
+class Step:
+    def __init__(self, t0=0, magnitude=1):
+        self.t0 = t0
+        self.magnitude = magnitude
+
+    def sample(self, ts, td=0):
+        xs = np.zeros_like(ts)
+        xs[ts >= self.t0 + td] = self.magnitude
+        return xs
+
+
 def parse_velocity_data(feedback_msgs, cmd_msgs, cmd_ts, idx):
     t0 = cmd_ts[0] - 0.1  # small extra buffer before commands start
-    t1 = cmd_ts[-1]
+    t1 = cmd_ts[-1] - 0.9
     feedback_msgs = ros_utils.trim_msgs(feedback_msgs, t0=t0, t1=t1)
     ts, _, vs = ros_utils.parse_ur10_joint_state_msgs(feedback_msgs)
+
+    # TODO, ideally we'd make independent the range of messages and the ones
+    # we'd like to use for fitting the curve
 
     # all of the commands should be the same
     cmd_value = cmd_msgs[0].data[idx]
@@ -34,13 +48,15 @@ def parse_velocity_data(feedback_msgs, cmd_msgs, cmd_ts, idx):
     for i in range(ts.shape[0]):
         us[i] = 0 if ts[i] < cmd_ts[0] else cmd_value
 
+    step = Step(t0=cmd_ts[0] - ts[0], magnitude=cmd_value)
+
     # normalize time so that ts[0] = 0
     ts -= ts[0]
 
     # take only the velocity from joint idx
     vs = vs[:, idx]
 
-    return ts, us, vs
+    return ts, us, vs, step
 
 
 def process_one_bag(path, joint_idx, save=False):
@@ -58,17 +74,21 @@ def process_one_bag(path, joint_idx, save=False):
         [t.to_sec() for _, _, t in bag.read_messages("/mobile_manipulator_cmd_vel")]
     )
 
-    ts, us, ys_actual = parse_velocity_data(
+    ts, us, ys_actual, step = parse_velocity_data(
         feedback_msgs, cmd_msgs, cmd_ts, idx=joint_idx
     )
 
     # fit first- and second-order models to the data
-    ωn, ζ = sysid.identify_second_order_system(ts, us, ys_actual)
+    ωn, ζ, td = sysid.identify_second_order_system(ts, us, ys_actual, step)
     τ = sysid.identify_first_order_system(ts, us, ys_actual)
+    print(ωn)
+    print(ζ)
+    print(td)
 
     # forward simulate the models
     ys_fit1 = sysid.simulate_first_order_system(ts, τ, us)
-    ys_fit2 = sysid.simulate_second_order_system(ts, ωn, ζ, us)
+
+    ys_fit2 = sysid.simulate_second_order_system(ts, ωn, ζ, step.sample(ts, td=td))
 
     # make sure all steps are in positive direction for consistency
     if us[-1] < 0:
@@ -111,6 +131,7 @@ def main():
 
     for i, path in enumerate(BAG_PATHS):
         process_one_bag(path, i, save=args.save)
+        # break
     plt.show()
 
 
