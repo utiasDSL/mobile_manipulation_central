@@ -2,6 +2,7 @@ import rospy
 import numpy as np
 
 from std_msgs.msg import Float64MultiArray
+from geometry_msgs.msg import Twist
 from rosgraph_msgs.msg import Clock
 from sensor_msgs.msg import JointState
 
@@ -26,9 +27,6 @@ class SimulatedRobotROSInterface:
         self.feedback_pub = rospy.Publisher(
             robot_name + "/joint_states", JointState, queue_size=1
         )
-        self.cmd_sub = rospy.Subscriber(
-            robot_name + "/cmd_vel", Float64MultiArray, self._cmd_cb
-        )
 
     def ready(self):
         return self.cmd_vel is not None
@@ -44,10 +42,6 @@ class SimulatedRobotROSInterface:
         msg.velocity = v
         self.feedback_pub.publish(msg)
 
-    def _cmd_cb(self, msg):
-        self.cmd_vel = np.array(msg.data)
-        assert self.cmd_vel.shape == (self.nv,)
-
     def publish_time(self, t):
         """Publish (simulation) time."""
         msg = Clock()
@@ -56,15 +50,34 @@ class SimulatedRobotROSInterface:
 
 
 class SimulatedRidgebackROSInterface(SimulatedRobotROSInterface):
+    """Simulated Ridgeback interface."""
     def __init__(self):
+        robot_name = "ridgeback"
         super().__init__(
-            nq=3, nv=3, robot_name="ridgeback", joint_names=["x", "y", "yaw"]
+            nq=3, nv=3, robot_name=robot_name, joint_names=["x", "y", "yaw"]
         )
+
+        self.cmd_sub = rospy.Subscriber(robot_name + "/cmd_vel", Twist, self._cmd_cb)
+
+    def _cmd_cb(self, msg):
+        self.cmd_vel = np.array([msg.linear.x, msg.linear.y, msg.angular.z])
 
 
 class SimulatedUR10ROSInterface(SimulatedRobotROSInterface):
+    """Simulated UR10 interface."""
     def __init__(self):
-        super().__init__(nq=6, nv=6, robot_name="ur10", joint_names=UR10_JOINT_NAMES)
+        robot_name = "ur10"
+        super().__init__(
+            nq=6, nv=6, robot_name=robot_name, joint_names=UR10_JOINT_NAMES
+        )
+
+        self.cmd_sub = rospy.Subscriber(
+            robot_name + "/cmd_vel", Float64MultiArray, self._cmd_cb
+        )
+
+    def _cmd_cb(self, msg):
+        self.cmd_vel = np.array(msg.data)
+        assert self.cmd_vel.shape == (self.nv,)
 
 
 class SimulatedMobileManipulatorROSInterface:
@@ -74,6 +87,10 @@ class SimulatedMobileManipulatorROSInterface:
 
         self.nq = self.arm.nq + self.base.nq
         self.nv = self.arm.nv + self.base.nv
+
+    @property
+    def cmd_vel(self):
+        return np.concatenate((self.base.cmd_vel, self.arm.cmd_vel))
 
     def ready(self):
         return self.base.ready() and self.arm.ready()
@@ -87,6 +104,5 @@ class SimulatedMobileManipulatorROSInterface:
 
     def publish_time(self, t):
         """Publish (simulation) time."""
-        msg = Clock()
-        msg.clock = rospy.Time(t)
-        self.clock_pub.publish(msg)
+        # arbitrary: we could also use the arm component
+        self.base.publish_time(t)

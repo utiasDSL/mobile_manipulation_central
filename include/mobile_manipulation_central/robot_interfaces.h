@@ -22,16 +22,16 @@ class RobotROSInterface {
         v_ = Eigen::VectorXd::Zero(nv);
     }
 
-    size_t nq() { return nq_; };
-    size_t nv() { return nv_; };
+    size_t nq() const { return nq_; };
+    size_t nv() const { return nv_; };
 
-    virtual Eigen::VectorXd q() { return q_; }
+    virtual Eigen::VectorXd q() const { return q_; }
 
-    virtual Eigen::VectorXd v() { return v_; }
+    virtual Eigen::VectorXd v() const { return v_; }
 
     virtual void brake() { publish_cmd_vel(Eigen::VectorXd::Zero(nv_)); }
 
-    virtual bool ready() { return joint_states_received_; }
+    virtual bool ready() const { return joint_states_received_; }
 
     virtual void publish_cmd_vel(const Eigen::VectorXd& cmd_vel) = 0;
 
@@ -118,15 +118,16 @@ class MobileManipulatorROSInterface : public RobotROSInterface {
     MobileManipulatorROSInterface(ros::NodeHandle& nh)
         : base_(nh),
           arm_(nh),
-          RobotROSInterface(base_.nq() + arm_.nq(), base_.nv() + arm_.nv()) {}
+          RobotROSInterface(9, 9) {}
+          // RobotROSInterface(base_.nq() + arm_.nq(), base_.nv() + arm_.nv()) {}
 
-    Eigen::VectorXd q() override {
+    Eigen::VectorXd q() const override {
         Eigen::VectorXd q(nq_);
         q << base_.q(), arm_.q();
         return q;
     }
 
-    Eigen::VectorXd v() override {
+    Eigen::VectorXd v() const override {
         Eigen::VectorXd v(nv_);
         v << base_.v(), arm_.v();
         return v;
@@ -137,7 +138,7 @@ class MobileManipulatorROSInterface : public RobotROSInterface {
         arm_.brake();
     }
 
-    bool ready() override { return base_.ready() && arm_.ready(); }
+    bool ready() const override { return base_.ready() && arm_.ready(); }
 
     void publish_cmd_vel(const Eigen::VectorXd& cmd_vel) override {
         base_.publish_cmd_vel(cmd_vel.head(base_.nv()));
