@@ -33,7 +33,7 @@ class RobotROSInterface {
 
     virtual bool ready() const { return joint_states_received_; }
 
-    virtual void publish_cmd_vel(const Eigen::VectorXd& cmd_vel) = 0;
+    virtual void publish_cmd_vel(const Eigen::VectorXd& cmd_vel, bool bodyframe = false) = 0;
 
    protected:
     size_t nq_;
@@ -59,14 +59,25 @@ class RidgebackROSInterface : public RobotROSInterface {
             nh.advertise<geometry_msgs::Twist>("ridgeback/cmd_vel", 1, true);
     }
 
-    void publish_cmd_vel(const Eigen::VectorXd& cmd_vel) override {
+    void publish_cmd_vel(const Eigen::VectorXd& cmd_vel, bool bodyframe = false) override {
+        // bodyframe indicates whether the supplied command is in the body
+        // frame or world frame. The robot takes commands in the body frame, so
+        // if the command is in the world it must be rotated.
         if (cmd_vel.rows() != nv_) {
             throw std::runtime_error("Ridgeback given cmd_vel of wrong shape.");
         }
 
         geometry_msgs::Twist msg;
-        msg.linear.x = cmd_vel(0);
-        msg.linear.y = cmd_vel(1);
+        if (bodyframe) {
+            msg.linear.x = cmd_vel(0);
+            msg.linear.y = cmd_vel(1);
+        } else /* world frame */ {
+            // we have to rotate into the body frame
+            Eigen::Rotation2Dd C_bw(-q_(2));
+            Eigen::Vector2d xy = C_bw * cmd_vel.head(2);
+            msg.linear.x = xy(0);
+            msg.linear.y = xy(1);
+        }
         msg.angular.z = cmd_vel(2);
         cmd_pub_.publish(msg);
     }
@@ -91,7 +102,7 @@ class UR10ROSInterface : public RobotROSInterface {
             nh.advertise<std_msgs::Float64MultiArray>("ur10/cmd_vel", 1, true);
     }
 
-    void publish_cmd_vel(const Eigen::VectorXd& cmd_vel) override {
+    void publish_cmd_vel(const Eigen::VectorXd& cmd_vel, bool bodyframe = false) override {
         if (cmd_vel.rows() != nv_) {
             throw std::runtime_error("UR10 given cmd_vel of wrong shape.");
         }
@@ -140,8 +151,8 @@ class MobileManipulatorROSInterface : public RobotROSInterface {
 
     bool ready() const override { return base_.ready() && arm_.ready(); }
 
-    void publish_cmd_vel(const Eigen::VectorXd& cmd_vel) override {
-        base_.publish_cmd_vel(cmd_vel.head(base_.nv()));
+    void publish_cmd_vel(const Eigen::VectorXd& cmd_vel, bool bodyframe = false) override {
+        base_.publish_cmd_vel(cmd_vel.head(base_.nv()), bodyframe);
         arm_.publish_cmd_vel(cmd_vel.tail(arm_.nv()));
     }
 
