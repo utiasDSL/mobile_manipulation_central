@@ -60,8 +60,10 @@ def parse_ur10_joint_state_msg(msg):
     return t, q, v
 
 
-def parse_ur10_joint_state_msgs(msgs):
-    """Parse a list of UR10 JointState messages."""
+def parse_ur10_joint_state_msgs(msgs, normalize_time=True):
+    """Parse a list of UR10 JointState messages.
+
+    If normalize_time=True, the time array is shifted so that t[0] = 0."""
     ts = []
     qs = []
     vs = []
@@ -72,7 +74,11 @@ def parse_ur10_joint_state_msgs(msgs):
         qs.append(q)
         vs.append(v)
 
-    return np.array(ts), np.array(qs), np.array(vs)
+    ts = np.array(ts)
+    if normalize_time:
+        ts -= ts[0]
+
+    return ts, np.array(qs), np.array(vs)
 
 
 def trim_msgs(msgs, t0=None, t1=None):
@@ -107,7 +113,7 @@ def yaw_from_quaternion_msg(msg):
 
 
 def parse_ridgeback_vicon_msg(msg):
-    """ Get the base's (x, y, yaw) 2D pose from a geometry_msgs/TransformStamped ROS message from Vicon."""
+    """Get the base's (x, y, yaw) 2D pose from a geometry_msgs/TransformStamped ROS message from Vicon."""
     t = msg_time(msg)
     x = msg.transform.translation.x
     y = msg.transform.translation.y
@@ -125,6 +131,26 @@ def parse_ridgeback_vicon_msgs(msgs):
         ts.append(t)
         qs.append(q)
     return np.array(ts), np.array(qs)
+
+
+def parse_ridgeback_joint_state_msgs(msgs, normalize_time=True):
+    """Parse a list of Ridgeback JointState messages.
+
+    If normalize_time=True, the time array is shifted so that t[0] = 0."""
+    ts = []
+    qs = []
+    vs = []
+
+    for msg in msgs:
+        ts.append(msg_time(msg))
+        qs.append(msg.position)
+        vs.append(msg.velocity)
+
+    ts = np.array(ts)
+    if normalize_time:
+        ts -= ts[0]
+
+    return ts, qs, vs
 
 
 def compile_xacro(xacro_path):
