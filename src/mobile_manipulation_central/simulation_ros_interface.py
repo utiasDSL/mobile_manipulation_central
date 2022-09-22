@@ -2,15 +2,46 @@ import rospy
 import numpy as np
 
 from std_msgs.msg import Float64MultiArray
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, TransformStamped
 from rosgraph_msgs.msg import Clock
 from sensor_msgs.msg import JointState
 
 from mobile_manipulation_central.ros_utils import UR10_JOINT_NAMES
 
 
+class SimulatedViconObjectInterface:
+    """Simulation of the Vicon ROS end point for a detected object.
+
+    This is intended to be instantiated from a simulation environment to
+    publish data in the same manner as Vicon would do in the real world.
+    """
+
+    def __init__(self, name):
+        topic = "/vicon/" + name + "/" + name
+        self.pub = rospy.Publisher(topic, TransformStamped, queue_size=1)
+
+    def publish_pose(t, r, Q):
+        """Publish the object's pose at time t, consisting of position r and
+        orientation (represented as a quaternion) Q.
+
+        Note that the order of Q is [x, y, z, w]."""
+        msg = TransformStamped()
+        msg.header.stamp = rospy.Time(t)
+
+        msg.transform.translation.x = r[0]
+        msg.transform.translation.y = r[1]
+        msg.transform.translation.z = r[2]
+
+        msg.transform.rotation.x = Q[0]
+        msg.transform.rotation.y = Q[1]
+        msg.transform.rotation.z = Q[2]
+        msg.transform.rotation.w = Q[3]
+
+        self.pub.publish(msg)
+
+
 class SimulatedRobotROSInterface:
-    """Interface between the MPC node and the simulation.
+    """Interface between the MPC node and a simulated robot.
 
     This can be used as a generic ROS end point to simulate a robot. The idea
     is that a simulator should instantiate this class and update it at the
@@ -51,6 +82,7 @@ class SimulatedRobotROSInterface:
 
 class SimulatedRidgebackROSInterface(SimulatedRobotROSInterface):
     """Simulated Ridgeback interface."""
+
     def __init__(self):
         robot_name = "ridgeback"
         super().__init__(
@@ -65,6 +97,7 @@ class SimulatedRidgebackROSInterface(SimulatedRobotROSInterface):
 
 class SimulatedUR10ROSInterface(SimulatedRobotROSInterface):
     """Simulated UR10 interface."""
+
     def __init__(self):
         robot_name = "ur10"
         super().__init__(
