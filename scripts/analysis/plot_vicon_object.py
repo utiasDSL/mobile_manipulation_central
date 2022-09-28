@@ -1,4 +1,4 @@
-"""Plot UR10 and Ridgeback joint position and velocity from a ROS bag."""
+"""Plot position of Vicon objects from a ROS bag."""
 import argparse
 
 import numpy as np

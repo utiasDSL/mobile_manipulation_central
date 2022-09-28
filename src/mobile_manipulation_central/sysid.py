@@ -12,16 +12,6 @@ def simulate_second_order_system(ts, ωn, ζ, us, k=1):
     return ys
 
 
-# def simulate_second_order_system2(ts, ωn, ζ, td, us, k=1):
-#     """Simulate a second-order system with parameters (k, ωn, ζ) and inputs us at times ts."""
-#     sys = signal.TransferFunction(k * (ωn ** 2), [1, 2 * ζ * ωn, ωn ** 2])
-#     # TODO what I want is to get the ys corresponding to the input ts...
-#     ts_out, ys, _ = signal.lsim2(sys, U=us, T=ts+td)
-#     import IPython
-#     IPython.embed()
-#     return ys, ts_out
-
-
 def simulate_first_order_system(ts, τ, us, k=1):
     """Simulate a second-order system with parameters (k, ωn, ζ) and inputs us at times ts."""
     sys = signal.TransferFunction(k, [τ, 1])

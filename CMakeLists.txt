@@ -66,6 +66,11 @@ target_link_libraries(ridgeback_vicon_estimator_node
   ${catkin_LIBRARIES}
 )
 
+add_executable(projectile_vicon_estimator_node src/projectile_vicon_estimator_node.cpp)
+target_link_libraries(projectile_vicon_estimator_node
+  ${catkin_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############

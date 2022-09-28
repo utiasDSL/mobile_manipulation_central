@@ -23,6 +23,7 @@ from mobile_manipulation_central.simulation_ros_interface import (
     SimulatedRidgebackROSInterface,
     SimulatedUR10ROSInterface,
     SimulatedMobileManipulatorROSInterface,
+    SimulatedViconObjectInterface,
 )
 from mobile_manipulation_central.kinematics import MobileManipulatorKinematics
 

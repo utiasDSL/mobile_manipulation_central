@@ -20,7 +20,10 @@ class SimulatedViconObjectInterface:
         topic = "/vicon/" + name + "/" + name
         self.pub = rospy.Publisher(topic, TransformStamped, queue_size=1)
 
-    def publish_pose(t, r, Q):
+        self.ground_truth_pub = rospy.Publisher(name + "/true_joint_states", JointState, queue_size=1)
+
+
+    def publish_pose(self, t, r, Q):
         """Publish the object's pose at time t, consisting of position r and
         orientation (represented as a quaternion) Q.
 
@@ -38,6 +41,18 @@ class SimulatedViconObjectInterface:
         msg.transform.rotation.w = Q[3]
 
         self.pub.publish(msg)
+
+    def publish_ground_truth(self, t, r, v):
+        """Publish ground-truth pose and twist.
+
+        This is useful for debugging purposes: compare estimated state to this
+        ground truth."""
+        msg = JointState()
+        msg.header.stamp = rospy.Time(t)
+        msg.name = ["x", "y", "z"]
+        msg.position = list(r)
+        msg.velocity = list(v)
+        self.ground_truth_pub.publish(msg)
 
 
 class SimulatedRobotROSInterface:
