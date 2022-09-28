@@ -8,63 +8,9 @@
 #include <sensor_msgs/JointState.h>
 #include <tf/transform_datatypes.h>
 
-#include <mobile_manipulation_central/exponential_smoothing.h>
+#include <mobile_manipulation_central/kalman_filter.h>
 
 namespace mm {
-
-struct Estimate {
-    Eigen::VectorXd x;
-    Eigen::MatrixXd P;
-};
-
-// Kalman Filter class, which assumes a continuous-time linear model but
-// (potentially) time-varying process and measurement noise.
-class KalmanFilter {
-   public:
-    KalmanFilter() {}
-
-    void init(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B,
-              const Eigen::MatrixXd& C) {
-        // \dot{x} = Ax + Bu + Gaussian noise
-        //       y = Cx + Gaussian noise
-        A_ = A;
-        B_ = B;
-        C_ = C;
-    }
-
-    Estimate predict(const Estimate& e, const Eigen::VectorXd& u,
-                     const Eigen::MatrixXd& Q, double dt) {
-        // Discretize the system for current timestep
-        Eigen::MatrixXd I = Eigen::MatrixXd::Identity(e.x.rows(), e.x.rows());
-        Eigen::MatrixXd Ad = I + dt * A_;
-        Eigen::MatrixXd Bd = dt * B_;
-
-        // Predict using motion model
-        Estimate prediction;
-        prediction.x = Ad * e.x + Bd * u;
-        prediction.P = Ad * e.P * Ad.transpose() + Q;
-        return prediction;
-    }
-
-    Estimate correct(const Estimate& e, const Eigen::VectorXd& y,
-                     const Eigen::MatrixXd& R, double dt) {
-        // Use Cholesky decomposition instead of computing the matrix inverse
-        // in Kalman gain directly
-        Eigen::MatrixXd G = C_ * e.P * C_.transpose() + R;
-        Eigen::LLT<Eigen::MatrixXd> LLT = G.llt();
-
-        // Correct using measurement model
-        Estimate correction;
-        correction.P = e.P - e.P * C_.transpose() * LLT.solve(C_ * e.P);
-        correction.x = e.x + e.P * C_.transpose() * LLT.solve(y - C_ * e.x);
-        return correction;
-    }
-
-   private:
-    Eigen::MatrixXd A_;
-    Eigen::MatrixXd B_;
-    Eigen::MatrixXd C_;
-};
 
 // The node listens to raw Vicon transform messages for a projectile object and
 // converts them to a JointState message for the translational component. For
@@ -76,16 +22,16 @@ class ProjectileViconEstimator {
 
     ProjectileViconEstimator() {}
 
-    // Start the node.
-    bool init(ros::NodeHandle& nh, double pos_meas_var, double pos_proc_var,
-              double vel_proc_var, const Eigen::Vector3d& gravity) {
-
-        pos_meas_var_ = pos_meas_var;
+    bool init(ros::NodeHandle& nh, double pos_proc_var,
+              double vel_proc_var, double pos_meas_var, const Eigen::Vector3d& gravity) {
         pos_proc_var_ = pos_proc_var;
         vel_proc_var_ = vel_proc_var;
-        g_ = gravity;
+        pos_meas_var_ = pos_meas_var;
+        gravity_ = gravity;
 
         // Initialize the Kalman filter
+        // A = |0 I|  B = |0|  C = I
+        //     |0 0|      |I|
         Eigen::MatrixXd A = Eigen::MatrixXd::Zero(6, 6);
         A.topRightCorner(3, 3) = Eigen::MatrixXd::Identity(3, 3);
         Eigen::MatrixXd B = Eigen::MatrixXd::Zero(6, 3);
@@ -146,20 +92,22 @@ class ProjectileViconEstimator {
             // Compute process and measurement noise covariance (time-dependent)
             Eigen::Matrix3d I = Eigen::Matrix3d::Identity();
 
+            // clang-format off
             Eigen::MatrixXd R(6, 6);
-            R << pos_meas_var_ * I, 0 * I, 0 * I,
-                2 * pos_meas_var_ * I / (dt * dt);
+            R << pos_meas_var_ * I, 0 * I,
+                             0 * I, 2 * pos_meas_var_ * I / (dt * dt);
 
-            // TODO shouldn't this be squared?
             Eigen::MatrixXd Q(6, 6);
-            Q << dt * pos_proc_var_ * I, 0 * I, 0 * I, dt * vel_proc_var_ * I;
+            Q << dt * dt * pos_proc_var_ * I, 0 * I,
+                                       0 * I, dt * dt * vel_proc_var_ * I;
+            // clang-format on
 
             // Apply Kalman filter to estimate state
             if (msg_count_ == 1) {
                 estimate_.x = y;
                 estimate_.P = R;
             } else {
-                estimate_ = kf_.predict(estimate_, g_, Q, dt);
+                estimate_ = kf_.predict(estimate_, gravity_, Q, dt);
                 estimate_ = kf_.correct(estimate_, y, R, dt);
             }
         }
@@ -178,18 +126,18 @@ class ProjectileViconEstimator {
     double t_prev_;
     Eigen::Vector3d q_prev_;
 
-    // state estimate
-    Estimate estimate_;
-
-    // process and noise variance
-    double pos_meas_var_;
+    // Process and noise variance
     double pos_proc_var_;
     double vel_proc_var_;
+    double pos_meas_var_;
 
-    Eigen::Vector3d g_;  // gravity
+    Eigen::Vector3d gravity_;
+
+    // State estimate and Kalman filter
+    GaussianEstimate estimate_;
     KalmanFilter kf_;
 
-    // Number of messages received.
+    // Number of messages received
     size_t msg_count_ = 0;
 
 };  // class ProjectileViconEstimator
@@ -198,18 +146,13 @@ class ProjectileViconEstimatorNode {
    public:
     ProjectileViconEstimatorNode() {}
 
-    bool init(ros::NodeHandle& nh, const std::string& name) {
-        double pos_meas_var = 1e-2;
-        double pos_proc_var = 1.0;
-        double vel_proc_var = 1.0;
+    void init(ros::NodeHandle& nh, const std::string& name, double pos_proc_var,
+              double vel_proc_var, double pos_meas_var) {
         Eigen::Vector3d gravity(0, 0, -9.81);
-
-        estimator_.init(nh, pos_meas_var, pos_proc_var, vel_proc_var, gravity);
+        estimator_.init(nh, pos_proc_var, vel_proc_var, pos_meas_var, gravity);
 
         joint_states_pub_ =
             nh.advertise<sensor_msgs::JointState>(name + "/joint_states", 1);
-
-        return true;
     }
 
     // Spin, publishing the most recent estimate at the specified rate.

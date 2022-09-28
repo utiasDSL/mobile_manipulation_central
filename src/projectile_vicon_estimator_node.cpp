@@ -8,8 +8,13 @@ int main(int argc, char** argv) {
 
     ros::Rate rate(100);
 
+    double pos_proc_var, vel_proc_var, pos_meas_var;
+    nh.param<double>("pos_proc_var", pos_proc_var, 1.0);
+    nh.param<double>("vel_proc_var", vel_proc_var, 1.0);
+    nh.param<double>("pos_meas_var", pos_meas_var, 1.0);
+
     mm::ProjectileViconEstimatorNode node;
-    node.init(nh, "projectile");
+    node.init(nh, "projectile", pos_proc_var, vel_proc_var, pos_meas_var);
     node.spin(rate);
 
     return 0;
