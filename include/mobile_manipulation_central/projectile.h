@@ -42,6 +42,8 @@ class ProjectileViconEstimator {
         std::string vicon_topic;
         nh.param<std::string>("vicon_topic", vicon_topic,
                               "/vicon/Projectile/Projectile");
+        nh.param<double>("activation_height", activation_height_, 1.0);
+        nh.param<double>("deactivation_height", deactivation_height_, 0.2);
         vicon_sub_ = nh.subscribe(vicon_topic, 1,
                                   &ProjectileViconEstimator::vicon_cb, this);
 
@@ -69,6 +71,17 @@ class ProjectileViconEstimator {
         Eigen::Vector3d q_meas;
         q_meas << msg.transform.translation.x, msg.transform.translation.y,
             msg.transform.translation.z;
+
+        // We assume the projectile is in flight (i.e. subject to gravitational
+        // acceleration) if it is above a certain height and has not yet
+        // reached a certain minimum height. Otherwise, we assume acceleration
+        // is zero.
+        if (active_ && q_meas(2) <= deactivation_height_) {
+            active_ = false;
+        }
+        if (!active_ && q_meas(2) >= activation_height_) {
+            active_ = true;
+        }
 
         // Wait until we have at least two messages so we can numerically
         // differentiate.
@@ -107,7 +120,13 @@ class ProjectileViconEstimator {
                 estimate_.x = y;
                 estimate_.P = R;
             } else {
-                estimate_ = kf_.predict(estimate_, gravity_, Q, dt);
+                // TODO we may want to inflate the process covariance when we
+                // are not in projectile flight
+                Eigen::Vector3d u = Eigen::Vector3d::Zero();
+                if (active_) {
+                    u = gravity_;
+                }
+                estimate_ = kf_.predict(estimate_, u, Q, dt);
                 estimate_ = kf_.correct(estimate_, y, R, dt);
             }
         }
@@ -136,6 +155,10 @@ class ProjectileViconEstimator {
     // State estimate and Kalman filter
     GaussianEstimate estimate_;
     KalmanFilter kf_;
+
+    bool active_ = false;
+    double activation_height_;
+    double deactivation_height_;
 
     // Number of messages received
     size_t msg_count_ = 0;

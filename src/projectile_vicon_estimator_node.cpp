@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
     nh.param<double>("pos_meas_var", pos_meas_var, 1.0);
 
     mm::ProjectileViconEstimatorNode node;
-    node.init(nh, "projectile", pos_proc_var, vel_proc_var, pos_meas_var);
+    node.init(nh, "Projectile", pos_proc_var, vel_proc_var, pos_meas_var);
     node.spin(rate);
 
     return 0;
