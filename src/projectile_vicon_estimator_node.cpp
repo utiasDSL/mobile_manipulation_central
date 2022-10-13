@@ -13,6 +13,10 @@ int main(int argc, char** argv) {
     nh.param<double>("vel_proc_var", vel_proc_var, 1.0);
     nh.param<double>("pos_meas_var", pos_meas_var, 1.0);
 
+    std::cout << "pos_proc_var = " << pos_proc_var << std::endl;
+    std::cout << "vel_proc_var = " << vel_proc_var << std::endl;
+    std::cout << "pos_meas_var = " << pos_meas_var << std::endl;
+
     mm::ProjectileViconEstimatorNode node;
     node.init(nh, "Projectile", pos_proc_var, vel_proc_var, pos_meas_var);
     node.spin(rate);

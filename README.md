@@ -140,3 +140,8 @@ files (for acceleration), the joint limits are:
   rosrun controller_manager controller_manager start <controller_name>
   rosrun controller_manager controller_manager stop <controller_name>
   ```
+
+## Todo
+* Basic PyBullet simulation support (that can be easily extended to suit one's
+  own project)
+* Kalman filter Ridgeback base and UR10 joints (velocities in particular)

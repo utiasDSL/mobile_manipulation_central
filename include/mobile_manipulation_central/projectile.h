@@ -72,16 +72,25 @@ class ProjectileViconEstimator {
         q_meas << msg.transform.translation.x, msg.transform.translation.y,
             msg.transform.translation.z;
 
+        bool switched = false;
+
         // We assume the projectile is in flight (i.e. subject to gravitational
         // acceleration) if it is above a certain height and has not yet
         // reached a certain minimum height. Otherwise, we assume acceleration
         // is zero.
         if (active_ && q_meas(2) <= deactivation_height_) {
             active_ = false;
+            switched = true;
         }
         if (!active_ && q_meas(2) >= activation_height_) {
             active_ = true;
+            // reset the estimate here?
+            switched = true;
         }
+
+        // if (!active_) {
+        //     return;
+        // }
 
         // Wait until we have at least two messages so we can numerically
         // differentiate.
@@ -114,6 +123,12 @@ class ProjectileViconEstimator {
             Q << dt * dt * pos_proc_var_ * I, 0 * I,
                                        0 * I, dt * dt * vel_proc_var_ * I;
             // clang-format on
+
+            // Reset estimated covariance if we switch in or out of projectile
+            // flight
+            if (switched) {
+                estimate_.P = R;
+            }
 
             // Apply Kalman filter to estimate state
             if (msg_count_ == 1) {

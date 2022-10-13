@@ -23,7 +23,7 @@ import IPython
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "cmd", help="Name of the home position to move to.", choices=("open", "close")
+        "cmd", help="Gripper position", choices=("open", "close")
     )
     parser.add_argument(
         "delay",

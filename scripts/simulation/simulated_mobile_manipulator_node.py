@@ -4,30 +4,38 @@
 This is intended to simulate to minimally simulate a robot with other real
 components of the system.
 """
+import argparse
 import rospy
 import numpy as np
 from spatialmath.base import rotz
 
-from mobile_manipulation_central import (
-    SimulatedRidgebackROSInterface,
-    SimulatedUR10ROSInterface,
-)
+import mobile_manipulation_central as mm
 
-
-BASE_HOME = np.array([-2, 1, 0])
-ARM_HOME = np.pi * np.array([0.5, -0.25, 0.5, -0.25, 0.5, 0.417])
+# BASE_HOME = np.array([-2, 1, 0])
+# ARM_HOME = np.pi * np.array([0.5, -0.25, 0.5, -0.25, 0.5, 0.417])
 RATE = 125  # Hz
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "home_name",
+        help="Name of the home position to move to.",
+        nargs="?",
+        default="default",
+    )
+    args = parser.parse_args()
+
     rospy.init_node("simulated_mobile_manipulator_node")
 
-    base = SimulatedRidgebackROSInterface()
-    q_base = BASE_HOME
+    home = mm.load_home_position(args.home_name)
+
+    base = mm.SimulatedRidgebackROSInterface()
+    q_base = home[:base.nq]
     v_base_body = np.zeros(base.nv)
 
-    arm = SimulatedUR10ROSInterface()
-    q_arm = ARM_HOME
+    arm = mm.SimulatedUR10ROSInterface()
+    q_arm = home[base.nq:]
     v_arm = np.zeros(arm.nv)
 
     rate = rospy.Rate(RATE)
