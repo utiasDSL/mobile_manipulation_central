@@ -1,39 +1,6 @@
 import numpy as np
 
 
-# TODO: functional, but perhaps not useful
-# class CompositeTrajectory:
-#     def __init__(self, trajectories, t0=None):
-#         self.trajectories = trajectories
-#         self.durations = np.cumsum([traj.duration for traj in trajectories])
-#
-#         self.t0 = None
-#         self.idx = 0
-#         self._switched = False
-#
-#     @property
-#     def duration(self):
-#         return self.durations[-1]
-#
-#     def switched(self):
-#         return self._switched
-#
-#     def done(self, t):
-#         """True if the trajectory is done, False otherwise."""
-#         if self.t0 is None:
-#             return False
-#         return t - self.t0 >= self.duration
-#
-#     def sample(self, t):
-#         if self.t0 is None:
-#             self.t0 = t
-#         Δt = t - self.t0
-#         self._switched = Δt > self.durations[self.idx]
-#         while Δt > self.durations[self.idx]:
-#             self.idx += 1
-#         return self.trajectories[self.idx].sample(Δt)
-
-
 class PointToPointTrajectory:
     """A straight-line trajectory between two points."""
 
