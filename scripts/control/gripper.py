@@ -70,7 +70,7 @@ def main():
         msg.rPRA = 255
 
     msg.rSPA = 255  # speed [0, 255]
-    msg.rFRA = 100  # force [0, 255]
+    msg.rFRA = 150  # force [0, 255]
 
     pub.publish(msg)
 

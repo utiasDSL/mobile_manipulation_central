@@ -25,6 +25,10 @@ class RidgebackViconEstimatorNode {
             base_vicon_topic, 1,
             &RidgebackViconEstimatorNode::ridgeback_vicon_cb, this);
 
+        // ridgeback_cmd_sub =
+        //     nh.subscribe("ridgeback/cmd_vel", 1,
+        //                  &RidgebackViconEstimatorNode::ridgeback_cmd_cb, this);
+
         ridgeback_joint_states_pub =
             nh.advertise<sensor_msgs::JointState>("/ridgeback/joint_states", 1);
 
@@ -53,6 +57,13 @@ class RidgebackViconEstimatorNode {
         ridgeback_joint_states_pub.publish(msg);
     }
 
+    // void ridgeback_cmd_cb(const geometry_msgs::Twist& msg) {
+    //     // Twist is in the body frame
+    //     cmd_vel_(0) = msg.linear.x;
+    //     cmd_vel_(1) = msg.linear.y;
+    //     cmd_vel_(2) = msg.angular.z;
+    // }
+
     void ridgeback_vicon_cb(const geometry_msgs::TransformStamped& msg) {
         ++msg_count;
 
@@ -67,7 +78,7 @@ class RidgebackViconEstimatorNode {
         if (msg_count >= 2) {
             double dt = t - t_prev;
 
-            // Compute velocity via numerical differentiation
+            // Compute measured velocity via numerical differentiation
             Eigen::Vector3d delta = q - q_prev;
             delta(2) = mm::wrap_to_pi(delta(2));
             Eigen::Vector3d v_measured = delta / dt;

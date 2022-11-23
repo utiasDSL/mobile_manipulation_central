@@ -126,22 +126,22 @@ class ProjectileViconEstimator {
 
             // Reset estimated covariance if we switch in or out of projectile
             // flight
-            if (switched) {
-                estimate_.P = R;
-            }
+            // if (switched) {
+            //     estimate_.P = R;
+            // }
 
             // Apply Kalman filter to estimate state
-            if (msg_count_ == 1) {
+            if (msg_count_ == 1 || !active_) {
                 estimate_.x = y;
                 estimate_.P = R;
             } else {
                 // TODO we may want to inflate the process covariance when we
                 // are not in projectile flight
-                Eigen::Vector3d u = Eigen::Vector3d::Zero();
-                if (active_) {
-                    u = gravity_;
-                }
-                estimate_ = kf_.predict(estimate_, u, Q, dt);
+                // Eigen::Vector3d u = Eigen::Vector3d::Zero();
+                // if (active_) {
+                //     u = gravity_;
+                // }
+                estimate_ = kf_.predict(estimate_, gravity_, Q, dt);
                 estimate_ = kf_.correct(estimate_, y, R, dt);
             }
         }

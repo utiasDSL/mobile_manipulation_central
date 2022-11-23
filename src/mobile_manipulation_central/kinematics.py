@@ -162,8 +162,9 @@ class RobotKinematics:
 
 
 class MobileManipulatorKinematics(RobotKinematics):
+    # TODO support args to the xacro file
     def __init__(
-        self, filename="thing_no_wheels.urdf.xacro", tool_link_name="gripped_object"
+        self, filename="thing_no_wheels.urdf.xacro", tool_link_name="gripper"
     ):
         rospack = rospkg.RosPack()
         xacro_path = (

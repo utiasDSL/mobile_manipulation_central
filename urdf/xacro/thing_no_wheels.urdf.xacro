@@ -34,7 +34,7 @@ joints.
 
   <xacro:arg name="kinematics_params" default="$(find mobile_manipulation_central)/config/ur10/kinematics_parameters.yaml"/>
   <xacro:arg name="visual_params" default="$(find mobile_manipulation_central)/config/ur10/visual_parameters.yaml"/>
-  <xacro:arg name="transform_params" default="$(find mobile_manipulation_central)/config/ur10/transforms.yaml"/>
+  <xacro:arg name="transform_params" default="$(find mobile_manipulation_central)/config/ur10/null_transforms.yaml"/>
 
   <!-- Load the base and tool transforms -->
   <xacro:property name="transform_params_file" value="$(arg transform_params)" />

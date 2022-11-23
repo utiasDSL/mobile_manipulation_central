@@ -14,8 +14,9 @@ import numpy as np
 import mobile_manipulation_central as mm
 
 
-MAX_JOINT_VELOCITY = 0.2
-P_GAIN = 0.5
+MAX_JOINT_VELOCITY = 0.5
+MAX_JOINT_ACCELERATION = 1.0
+P_GAIN = 10
 CONVERGENCE_TOL = 1e-2
 RATE = 125  # Hz
 
@@ -57,15 +58,20 @@ def main():
     # wait until robot feedback has been received
     while not rospy.is_shutdown() and not robot.ready():
         rate.sleep()
+    q0 = robot.q.copy()
+
+    trajectory = PointToPointTrajectory.quintic(q0, home, MAX_JOINT_VELOCITY, MAX_JOINT_ACCELERATION)
 
     # use P control to navigate to robot home, with limits on the velocity
     while not rospy.is_shutdown():
-        error = home - robot.q
-        if np.linalg.norm(error) < CONVERGENCE_TOL:
+        if np.linalg.norm(home - robot.q) < CONVERGENCE_TOL:
             break
 
-        cmd_vel = P_GAIN * error
+        t = rospy.Time.now().to_sec()
+        qd, vd, _ = trajectory.sample(t)
+        cmd_vel = P_GAIN * (qd - q) + vd
         cmd_vel = mm.bound_array(cmd_vel, lb=-MAX_JOINT_VELOCITY, ub=MAX_JOINT_VELOCITY)
+
         if args.dry_run:
             print(cmd_vel)
         else:

@@ -1,0 +1,7 @@
+# no calibration for base-arm or tool
+T1:
+  rpy: [0, 0, 0]
+  xyz: [0, 0, 0]
+T2:
+  rpy: [0, 0, 0]
+  xyz: [0, 0, 0]

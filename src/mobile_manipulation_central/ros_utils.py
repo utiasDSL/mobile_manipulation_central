@@ -150,7 +150,60 @@ def parse_ridgeback_joint_state_msgs(msgs, normalize_time=True):
     if normalize_time:
         ts -= ts[0]
 
-    return ts, qs, vs
+    return ts, np.array(qs), np.array(vs)
+
+
+# NOTE: this is much worse than the linear interpolation approach below
+# def align_lists(times1, times2, values):
+#     """Align values in `values2` with the times `times11."""
+#     aligned_values = []
+#     idx2 = 0
+#     for idx1 in range(len(times1)):
+#         t = times1[idx1]
+#         # iterate through times2 until a more recent value found
+#         while idx2 + 1 < len(times2) and times2[idx2 + 1] < t:
+#             idx2 += 1
+#         aligned_values.append(values[idx2])
+#     return aligned_values
+
+
+def align_lists_linear_interpolate(times1, times2, values):
+    """Align values in `values2` with the times `times11 using linear interpolation.
+
+    Each value in `values` should be a scalar or numpy array (i.e. something
+    that can be scaled and added).
+
+    Returns a new list of values corresponding to `times1`.
+    """
+    aligned_values = []
+    idx2 = 0
+    n1 = times1.shape[0]
+    n2 = times2.shape[0]
+    for idx1 in range(n1):
+        t = times1[idx1]
+
+        if t <= times2[0]:
+            aligned_values.append(values[0])
+            continue
+        if t >= times2[-1]:
+            aligned_values.append(values[-1])
+            continue
+
+        # iterate through times2 until a more recent value found
+        while idx2 + 1 < n2 and times2[idx2 + 1] < t:
+            idx2 += 1
+
+        assert times2[idx2] <= t <= times2[idx2 + 1]
+
+        # linear interpolate between values[idx2] and values[idx2 + 1]
+        Δt = times2[idx2 + 1] - times2[idx2]
+        a = times2[idx2 + 1] - t
+        b = t - times2[idx2]
+        value = (a * values[idx2] + b * values[idx2 + 1]) / Δt
+        aligned_values.append(value)
+
+        # aligned_values.append(values[idx2])
+    return aligned_values
 
 
 def compile_xacro(xacro_path):
