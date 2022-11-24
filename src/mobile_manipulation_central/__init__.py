@@ -26,6 +26,10 @@ from mobile_manipulation_central.simulation_ros_interface import (
     SimulatedViconObjectInterface,
 )
 from mobile_manipulation_central.kinematics import MobileManipulatorKinematics
+from mobile_manipulation_central.trajectory_generation import (
+    PointToPointTrajectory,
+    QuinticTimeScaling,
+)
 
 BAG_DIR = os.environ["MOBILE_MANIPULATION_CENTRAL_BAG_DIR"]
 

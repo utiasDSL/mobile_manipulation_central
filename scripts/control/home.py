@@ -14,9 +14,9 @@ import numpy as np
 import mobile_manipulation_central as mm
 
 
-MAX_JOINT_VELOCITY = 0.5
+MAX_JOINT_VELOCITY = 0.2
 MAX_JOINT_ACCELERATION = 1.0
-P_GAIN = 10
+P_GAIN = 1
 CONVERGENCE_TOL = 1e-2
 RATE = 125  # Hz
 
@@ -60,16 +60,26 @@ def main():
         rate.sleep()
     q0 = robot.q.copy()
 
-    trajectory = PointToPointTrajectory.quintic(q0, home, MAX_JOINT_VELOCITY, MAX_JOINT_ACCELERATION)
+    # build the trajectory
+    trajectory = mm.PointToPointTrajectory.quintic(
+        q0, home, MAX_JOINT_VELOCITY, MAX_JOINT_ACCELERATION
+    )
 
-    # use P control to navigate to robot home, with limits on the velocity
+    # use P control + feedforward velocity to track the trajectory
     while not rospy.is_shutdown():
-        if np.linalg.norm(home - robot.q) < CONVERGENCE_TOL:
+        t = rospy.Time.now().to_sec()
+        dist = np.linalg.norm(home - robot.q)
+
+        # we want to both let the trajectory complete and ensure we've
+        # converged properly
+        if trajectory.done(t) and dist < CONVERGENCE_TOL:
             break
 
-        t = rospy.Time.now().to_sec()
         qd, vd, _ = trajectory.sample(t)
-        cmd_vel = P_GAIN * (qd - q) + vd
+        cmd_vel = P_GAIN * (qd - robot.q) + vd
+
+        # this shouldn't be needed unless the trajectory is poorly tracked, but
+        # we do it just in case for safety
         cmd_vel = mm.bound_array(cmd_vel, lb=-MAX_JOINT_VELOCITY, ub=MAX_JOINT_VELOCITY)
 
         if args.dry_run:
@@ -81,7 +91,7 @@ def main():
 
     robot.brake()
 
-    print(f"Converged to within {np.linalg.norm(error)} of home position.")
+    print(f"Converged to within {dist} of home position.")
 
 
 if __name__ == "__main__":

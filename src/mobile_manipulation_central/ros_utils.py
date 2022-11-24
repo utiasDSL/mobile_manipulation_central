@@ -153,20 +153,28 @@ def parse_ridgeback_joint_state_msgs(msgs, normalize_time=True):
     return ts, np.array(qs), np.array(vs)
 
 
-# NOTE: this is much worse than the linear interpolation approach below
-# def align_lists(times1, times2, values):
-#     """Align values in `values2` with the times `times11."""
-#     aligned_values = []
-#     idx2 = 0
-#     for idx1 in range(len(times1)):
-#         t = times1[idx1]
-#         # iterate through times2 until a more recent value found
-#         while idx2 + 1 < len(times2) and times2[idx2 + 1] < t:
-#             idx2 += 1
-#         aligned_values.append(values[idx2])
-#     return aligned_values
+def parse_transform_stamped_msg(msg):
+    """Parse time and pose from a TransformStamped message.
+
+    Pose is represented as a length-7 vector with position followed by a
+    quaternion representing orientation, with the scalar part of the quaternion
+    at the end.
+    """
+    t = msg_time(msg)
+    r = msg.transform.translation
+    q = msg.transform.rotation
+    pose = np.array([r.x, r.y, r.z, q.x, q.y, q.z, q.w])
+    return t, pose
 
 
+def parse_transform_stamped_msgs(msgs, normalize_time=True):
+    """Parse a list of TransformStamped messages."""
+    ts = parse_time(msgs, normalize_time=normalize_time)
+    poses = np.array([parse_transform_stamped_msg(msg)[1] for msg in msgs])
+    return ts, poses
+
+
+# TODO not ROS specific, so consider moving elsewhere
 def align_lists_linear_interpolate(times1, times2, values):
     """Align values in `values2` with the times `times11 using linear interpolation.
 
@@ -202,7 +210,6 @@ def align_lists_linear_interpolate(times1, times2, values):
         value = (a * values[idx2] + b * values[idx2 + 1]) / Δt
         aligned_values.append(value)
 
-        # aligned_values.append(values[idx2])
     return aligned_values
 
 
