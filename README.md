@@ -103,6 +103,11 @@ There are some convenient scripts in the `scripts` directory:
 * `control/gripper.py` opens and closes the gripper.
 * `control/sine_trajectory` tracks a sinusoidal trajectory with a single joint.
 
+### Tests
+
+Unit tests can be found in the `test` directory. Currently there are only
+Python unit tests, which can be run using [pytest](https://pytest.org/).
+
 ## Robot specifications
 
 ### Ridgeback limits
