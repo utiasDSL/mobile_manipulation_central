@@ -1,8 +1,7 @@
 """General ROS parsing utilities."""
-import subprocess
-import tempfile
 import numpy as np
 from spatialmath import UnitQuaternion
+from spatialmath.base import qslerp
 import xacro
 
 
@@ -174,8 +173,30 @@ def parse_transform_stamped_msgs(msgs, normalize_time=True):
     return ts, poses
 
 
+def lerp(x, y, s):
+    """Linearly interpolate between values x and y with parameter s in [0, 1]."""
+    assert 0 <= s <= 1
+    return (1 - s) * x + s * y
+
+
+def slerp(q0, q1, s):
+    """Spherical linear interpolation between quaternions q0 and q1 with parameter s in [0, 1].
+
+    Quaternions have order [x, y, z, w]; i.e., the scalar part comes at the end.
+    """
+    assert 0 <= s <= 1
+    assert q0.shape == q1.shape == (4,)
+
+    # we need to roll to convert between spatialmath's [w, x, y, z] convention
+    # and our own
+    q0 = np.roll(q0, 1)
+    q1 = np.roll(q1, 1)
+    q = qslerp(q0, q1, s)
+    return np.roll(q, -1)
+
+
 # TODO not ROS specific, so consider moving elsewhere
-def align_lists_linear_interpolate(times1, times2, values):
+def interpolate_list(times1, times2, values, method="lerp"):
     """Align values in `values2` with the times `times11 using linear interpolation.
 
     Each value in `values` should be a scalar or numpy array (i.e. something
@@ -183,10 +204,15 @@ def align_lists_linear_interpolate(times1, times2, values):
 
     Returns a new list of values corresponding to `times1`.
     """
+    if method == "slerp":
+        interp_func = slerp
+    else:
+        interp_func = lerp
+
     aligned_values = []
     idx2 = 0
-    n1 = times1.shape[0]
-    n2 = times2.shape[0]
+    n1 = len(times1)
+    n2 = len(times2)
     for idx1 in range(n1):
         t = times1[idx1]
 
@@ -203,11 +229,10 @@ def align_lists_linear_interpolate(times1, times2, values):
 
         assert times2[idx2] <= t <= times2[idx2 + 1]
 
-        # linear interpolate between values[idx2] and values[idx2 + 1]
+        # interpolate between values[idx2] and values[idx2 + 1]
         Δt = times2[idx2 + 1] - times2[idx2]
-        a = times2[idx2 + 1] - t
-        b = t - times2[idx2]
-        value = (a * values[idx2] + b * values[idx2 + 1]) / Δt
+        s = (t - times2[idx2]) / Δt
+        value = interp_func(values[idx2], values[idx2 + 1], s)
         aligned_values.append(value)
 
     return aligned_values
