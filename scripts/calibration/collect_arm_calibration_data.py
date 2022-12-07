@@ -14,18 +14,17 @@ import rospy
 import numpy as np
 
 import mobile_manipulation_central as mm
-from mobile_manipulation_central.trajectory_generation import PointToPointTrajectory
 
 
-MAX_JOINT_VELOCITY = 0.5
+MAX_JOINT_VELOCITY = 0.2
 MAX_JOINT_ACCELERATION = 1.0
-P_GAIN = 10
+P_GAIN = 1
 CONVERGENCE_TOL = 1e-3
 RATE = 125  # Hz
-EE_OBJECT_NAME = "ThingTray2"
+EE_OBJECT_NAME = "ThingWoodTray"
 
 # desired base configuration is the same for each
-DESIRED_BASE_CONFIGURATION = np.array([-1, 0, 0])
+# DESIRED_BASE_CONFIGURATION = np.array([-1, 0, 0])
 
 # fmt: off
 # last arm configuration is same as the first, so the robot goes back when done
@@ -82,7 +81,16 @@ def main():
         nargs="?",
         default="arm_calibration_data",
     )
+    parser.add_argument(
+        "--home-name",
+        help="Name of the home position to use for the base.",
+        default="default",
+    )
     args = parser.parse_args()
+
+    # home position is used to determine where the base should move to (and
+    # stay at) for all data collection
+    home = mm.load_home_position(args.home_name)
 
     rospy.init_node("arm_calibration_data_collection")
 
@@ -97,7 +105,12 @@ def main():
     q0 = robot.q.copy()
 
     num_configs = DESIRED_ARM_CONFIGURATIONS.shape[0]
-    goals = np.hstack((np.tile(DESIRED_BASE_CONFIGURATION, (num_configs, 1)), DESIRED_ARM_CONFIGURATIONS))
+    goals = np.hstack(
+        (
+            np.tile(home[:3], (num_configs, 1)),
+            DESIRED_ARM_CONFIGURATIONS,
+        )
+    )
 
     # measured configurations (not exactly the same as desired)
     qs = []
@@ -108,14 +121,17 @@ def main():
     Qs = []
 
     goal = goals[0, :]
-    trajectory = PointToPointTrajectory.quintic(q0, goal, MAX_JOINT_VELOCITY, MAX_JOINT_ACCELERATION)
+    trajectory = mm.PointToPointTrajectory.quintic(
+        q0, goal, MAX_JOINT_VELOCITY, MAX_JOINT_ACCELERATION
+    )
     print(f"Moving to goal 0 with duration {trajectory.duration} seconds.")
 
     # use P control to navigate to robot home, with limits on the velocity
     idx = 0
     while not rospy.is_shutdown():
-        dist = np.linalg.norm(goal - q)
-        if dist < CONVERGENCE_TOL:
+        t = rospy.Time.now().to_sec()
+        dist = np.linalg.norm(goal - robot.q)
+        if trajectory.done(t) and dist < CONVERGENCE_TOL:
             robot.brake()
             print(f"Converged to location {idx} with distance {dist}.")
 
@@ -132,8 +148,11 @@ def main():
             print(f"Average position = {r}.")
             print(f"Average quaternion = {Q}.")
 
+            # build trajectory to the next waypoint
             goal = goals[idx, :]
-            trajectory = PointToPointTrajectory.quintic(q, goal, MAX_JOINT_VELOCITY, MAX_JOINT_ACCELERATION)
+            trajectory = mm.PointToPointTrajectory.quintic(
+                q, goal, MAX_JOINT_VELOCITY, MAX_JOINT_ACCELERATION
+            )
             print(f"Moving to goal {idx} with duration {trajectory.duration} seconds.")
 
         t = rospy.Time.now().to_sec()

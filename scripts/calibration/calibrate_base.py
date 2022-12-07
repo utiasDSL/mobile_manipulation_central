@@ -19,14 +19,17 @@ def main():
     data = np.load(args.filename)
     q0 = data["q0"]
     qs = data["qs"]
-    # qds = data["qds"]
+    θds = data["θds"]
     num_configs = qs.shape[0]
 
-    # construct least squares problem
+    # construct least squares problem: we want to find a base position that
+    # does not move when the base is rotated
     A = np.tile(np.eye(2), (num_configs, 1))
     b = np.zeros(2 * num_configs)
     for i in range(num_configs):
         b[i*2:i*2+2] = q0[:2] - qs[i, :2]
+        # qd = np.array([q0[0], q0[1], θds[i]])
+        # b[i*3:i*3+3] = qd - qs[i, :]
 
     # solve for optimal offset
     Δq, _, _, _ = np.linalg.lstsq(A, b, rcond=None)

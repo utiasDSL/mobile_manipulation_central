@@ -44,6 +44,12 @@ class ProjectileViconEstimator {
                               "/vicon/Projectile/Projectile");
         nh.param<double>("activation_height", activation_height_, 1.0);
         nh.param<double>("deactivation_height", deactivation_height_, 0.2);
+
+        // 30 m/s is approximately the velocity of an object dropped from rest
+        // from a height of 3 meters once it reaches the floor. We should never
+        // go beyond that here.
+        nh.param<double>("max_projectile_velocity", max_velocity_, 30);
+
         vicon_sub_ = nh.subscribe(vicon_topic, 1,
                                   &ProjectileViconEstimator::vicon_cb, this);
 
@@ -72,7 +78,7 @@ class ProjectileViconEstimator {
         q_meas << msg.transform.translation.x, msg.transform.translation.y,
             msg.transform.translation.z;
 
-        bool switched = false;
+        // bool switched = false;
 
         // We assume the projectile is in flight (i.e. subject to gravitational
         // acceleration) if it is above a certain height and has not yet
@@ -80,17 +86,13 @@ class ProjectileViconEstimator {
         // is zero.
         if (active_ && q_meas(2) <= deactivation_height_) {
             active_ = false;
-            switched = true;
+            // switched = true;
         }
         if (!active_ && q_meas(2) >= activation_height_) {
             active_ = true;
             // reset the estimate here?
-            switched = true;
+            // switched = true;
         }
-
-        // if (!active_) {
-        //     return;
-        // }
 
         // Wait until we have at least two messages so we can numerically
         // differentiate.
@@ -131,12 +133,20 @@ class ProjectileViconEstimator {
             // }
 
             // Apply Kalman filter to estimate state
-            if (msg_count_ == 1 || !active_) {
+            if (v_meas.norm() > max_velocity_) {
+                // Reset the estimate when we have a large velocity change
+                // XXX This is a bit of a hack to deal with resetting obstacles
+                // in simulation, which results in large state discontinuities
+                estimate_.x << q_meas, 0, 0, 0;
+                estimate_.P = R;
+            } else if (msg_count_ == 1 || !active_) {
+                // If not active we don't do any estimation, we just directly
+                // take the measured value (we don't care about super accurate
+                // estimates when the object is not undergoing projectile
+                // motion)
                 estimate_.x = y;
                 estimate_.P = R;
             } else {
-                // TODO we may want to inflate the process covariance when we
-                // are not in projectile flight
                 // Eigen::Vector3d u = Eigen::Vector3d::Zero();
                 // if (active_) {
                 //     u = gravity_;
@@ -172,8 +182,19 @@ class ProjectileViconEstimator {
     KalmanFilter kf_;
 
     bool active_ = false;
+
+    // Height above which the object is "activated" and considered to be
+    // undergoing projectile motion
     double activation_height_;
+
+    // Height below which the object is "deactivated" and considered to be done
+    // with or about to be done with projectile motion (i.e. it is about to fit
+    // the ground)
     double deactivation_height_;
+
+    // Maximum allowed measured velocity. The estimate is not updated if the
+    // measured velocity if above this value.
+    double max_velocity_;
 
     // Number of messages received
     size_t msg_count_ = 0;
