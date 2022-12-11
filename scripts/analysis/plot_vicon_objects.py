@@ -4,33 +4,48 @@ import argparse
 import numpy as np
 import rosbag
 import matplotlib.pyplot as plt
+from spatialmath.base import q2r
 from mobile_manipulation_central import ros_utils
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("bagfile", help="Bag file to plot.")
+    parser.add_argument("--object", help="Object name to plot.")
     args = parser.parse_args()
 
     bag = rosbag.Bag(args.bagfile)
 
-    # get all Vicon object topics
-    topics = list(bag.get_type_and_topic_info()[1].keys())
-    try:
-        topics.remove("/vicon/markers")
-    except ValueError:
-        pass
-    topics = [topic for topic in topics if topic.startswith("/vicon/")]
-    names = [topic.split("/")[-1] for topic in topics]
+    if args.object:
+        names = [args.object]
+        topics = [f"/vicon/{args.object}/{args.object}"]
+    else:
+        # if no specific object provided, get all Vicon object topics
+        topics = list(bag.get_type_and_topic_info()[1].keys())
+        try:
+            topics.remove("/vicon/markers")
+        except ValueError:
+            pass
+        topics = [topic for topic in topics if topic.startswith("/vicon/")]
+        names = [topic.split("/")[-1] for topic in topics]
 
     # plot each Vicon object
+    z = np.array([0, 0, 1])
     for name, topic in zip(names, topics):
         msgs = [msg for _, msg, _ in bag.read_messages(topic)]
         positions = []
+        orientations = []
+        angles = []
         for msg in msgs:
             p = msg.transform.translation
             positions.append([p.x, p.y, p.z])
+            q = msg.transform.rotation
+            orientation = np.array([q.x, q.y, q.z, q.w])
+            orientations.append(orientation)
+            R = q2r(orientation, order="xyzs")
+            angles.append(np.arccos(z @ R @ z))
         positions = np.array(positions)
+        orientations = np.array(orientations)
         times = ros_utils.parse_time(msgs)
 
         # x, y, z position vs. time
@@ -41,6 +56,19 @@ def main():
         plt.xlabel("Time (s)")
         plt.ylabel("Position (m)")
         plt.title(f"{name} position vs. time")
+        plt.legend()
+        plt.grid()
+
+        # (x, y, z, w) quaternion orientation vs. time
+        plt.figure()
+        plt.plot(times, orientations[:, 0], label="x")
+        plt.plot(times, orientations[:, 1], label="y")
+        plt.plot(times, orientations[:, 2], label="z")
+        plt.plot(times, orientations[:, 3], label="w")
+        plt.plot(times, angles, label="angle")
+        plt.xlabel("Time (s)")
+        plt.ylabel("Orientation")
+        plt.title(f"{name} orientation vs. time")
         plt.legend()
         plt.grid()
 
@@ -55,6 +83,7 @@ def main():
         ax.set_xlabel("x (m)")
         ax.set_ylabel("y (m)")
         ax.set_zlabel("z (m)")
+        plt.title(f"{name} path")
 
         ax.set_xlim([-3, 3])
         ax.set_ylim([-3, 3])

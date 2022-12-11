@@ -14,6 +14,8 @@ import jaxlie
 
 from mobile_manipulation_central import MobileManipulatorKinematics
 
+import IPython
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -89,6 +91,12 @@ def main():
         T1 = transform(C1, r1)
         T2 = transform(C2, r2)
 
+        # T1 = transform(C1, r1)
+        # T2 = transform(np.eye(3), r2) @ transform(C2, np.zeros(3))
+
+        # T1 = transform(np.eye(3), np.zeros(3))
+        # T2 = transform(np.array([[0., 0, 1], [0, -1, 0], [1, 0, 0]]), r2)
+
         cost = 0
         for i in range(num_configs):
             ΔT = T1 @ T_bts_model[i] @ T2 @ T_tbs_meas[i]
@@ -108,7 +116,10 @@ def main():
         return jgrad(C1, r1, C2, r2)
 
     # setup and solve the optimization problem
-    x0 = (np.eye(3), np.zeros(3), np.eye(3), np.zeros(3))
+
+    C20 = np.array([[0., 0, 1], [0, -1, 0], [1, 0, 0]])
+    r20 = np.array([0, 0, 0.3])
+    x0 = (np.eye(3), np.zeros(3), C20, r20)
     problem = pymanopt.Problem(manifold, cost, euclidean_gradient=gradient)
     line_searcher = pymanopt.optimizers.line_search.BackTrackingLineSearcher()
     optimizer = pymanopt.optimizers.SteepestDescent(line_searcher=line_searcher)
@@ -116,12 +127,15 @@ def main():
 
     # optimal transforms
     T1_opt = transform(result.point[0], result.point[1])
-    T2_opt = transform(result.point[2], result.point[3])
+    # T2_opt = transform(result.point[2], result.point[3])
+    T2_opt = transform(np.eye(3), result.point[3]) @ transform(result.point[2], np.zeros(3))
 
     yaml_dict = {
         "T1": transform_dict(T1_opt),
         "T2": transform_dict(T2_opt),
     }
+
+    IPython.embed()
 
     # save parameters to a file for use in control
     if args.output_file_name is not None:

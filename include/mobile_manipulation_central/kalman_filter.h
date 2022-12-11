@@ -24,6 +24,7 @@ class KalmanFilter {
         C_ = C;
     }
 
+    // Prediction step: predict next state given a apriori model and input
     GaussianEstimate predict(const GaussianEstimate& e,
                              const Eigen::VectorXd& u, const Eigen::MatrixXd& Q,
                              double dt) {
@@ -39,13 +40,28 @@ class KalmanFilter {
         return prediction;
     }
 
+    // Compute normalized innovation squared, which can be used for chi-squared
+    // hypothesis testing (i.e. reject bad measurements)
+    double nis(const GaussianEstimate& e, const Eigen::VectorXd& y, const Eigen::MatrixXd& R) {
+        // Innovation
+        Eigen::VectorXd v = y - C_ * e.x;
+
+        // Innovation covariance
+        Eigen::MatrixXd S = C_ * e.P * C_.transpose() + R;
+        Eigen::LLT<Eigen::MatrixXd> LLT = S.llt();
+
+        return v.dot(LLT.solve(v));
+    }
+
+    // Correction step: fuse measured output with predicted state
     GaussianEstimate correct(const GaussianEstimate& e,
                              const Eigen::VectorXd& y, const Eigen::MatrixXd& R,
                              double dt) {
+        // Innovation covariance
         // Use Cholesky decomposition instead of computing the matrix inverse
         // in Kalman gain directly
-        Eigen::MatrixXd G = C_ * e.P * C_.transpose() + R;
-        Eigen::LLT<Eigen::MatrixXd> LLT = G.llt();
+        Eigen::MatrixXd S = C_ * e.P * C_.transpose() + R;
+        Eigen::LLT<Eigen::MatrixXd> LLT = S.llt();
 
         // Correct using measurement model
         GaussianEstimate correction;

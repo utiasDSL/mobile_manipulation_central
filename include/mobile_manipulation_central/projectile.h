@@ -6,6 +6,7 @@
 
 #include <geometry_msgs/TransformStamped.h>
 #include <sensor_msgs/JointState.h>
+#include <std_msgs/Empty.h>
 #include <tf/transform_datatypes.h>
 
 #include <mobile_manipulation_central/kalman_filter.h>
@@ -22,8 +23,8 @@ class ProjectileViconEstimator {
 
     ProjectileViconEstimator() {}
 
-    bool init(ros::NodeHandle& nh, double pos_proc_var,
-              double vel_proc_var, double pos_meas_var, const Eigen::Vector3d& gravity) {
+    bool init(ros::NodeHandle& nh, double pos_proc_var, double vel_proc_var,
+              double pos_meas_var, const Eigen::Vector3d& gravity) {
         pos_proc_var_ = pos_proc_var;
         vel_proc_var_ = vel_proc_var;
         pos_meas_var_ = pos_meas_var;
@@ -53,6 +54,11 @@ class ProjectileViconEstimator {
         vicon_sub_ = nh.subscribe(vicon_topic, 1,
                                   &ProjectileViconEstimator::vicon_cb, this);
 
+        // This is a topic rather than a service, because we want to use this
+        // from simulation while use_sim_time=True
+        reset_sub_ = nh.subscribe("reset_projectile_estimate", 1,
+                                  &ProjectileViconEstimator::reset_cb, this);
+
         return true;
     }
 
@@ -70,6 +76,12 @@ class ProjectileViconEstimator {
 
    private:
     /* FUNCTIONS */
+
+    void reset_cb(const std_msgs::Empty&) {
+        std::cout << "Projectile estimate reset." << std::endl;
+        msg_count_ = 0;
+        active_ = false;
+    }
 
     void vicon_cb(const geometry_msgs::TransformStamped& msg) {
         // Get the current joint configuration
@@ -133,27 +145,99 @@ class ProjectileViconEstimator {
             // }
 
             // Apply Kalman filter to estimate state
-            if (v_meas.norm() > max_velocity_) {
-                // Reset the estimate when we have a large velocity change
-                // XXX This is a bit of a hack to deal with resetting obstacles
-                // in simulation, which results in large state discontinuities
-                estimate_.x << q_meas, 0, 0, 0;
-                estimate_.P = R;
+            // if (v_meas.norm() > max_velocity_) {
+            //     // Reset the estimate when we have a large velocity change
+            //     // XXX This is a bit of a hack to deal with resetting
+            //     obstacles
+            //     // in simulation, which results in large state
+            //     discontinuities estimate_.x << q_meas, 0, 0, 0; estimate_.P =
+            //     R;
+            // } else if (msg_count_ == 1 || !active_) {
+
+            // Reject discontinuous jumps in the measurement
+            if ((q_meas - q_prev_).norm() > 0.3) {
+                std::cout << "rejected q_meas = " << q_meas.transpose()
+                          << std::endl;
+                t_prev_ = t;
+                return;
             } else if (msg_count_ == 1 || !active_) {
-                // If not active we don't do any estimation, we just directly
-                // take the measured value (we don't care about super accurate
-                // estimates when the object is not undergoing projectile
-                // motion)
                 estimate_.x = y;
                 estimate_.P = R;
             } else {
-                // Eigen::Vector3d u = Eigen::Vector3d::Zero();
-                // if (active_) {
-                //     u = gravity_;
-                // }
-                estimate_ = kf_.predict(estimate_, gravity_, Q, dt);
-                estimate_ = kf_.correct(estimate_, y, R, dt);
+                const GaussianEstimate prediction =
+                    kf_.predict(estimate_, gravity_, Q, dt);
+                estimate_ = kf_.correct(prediction, y, R, dt);
             }
+
+            // TODO clean up
+            // if (msg_count_ == 1) {
+            //     estimate_.x = y;
+            //     estimate_.P = R;
+            // } else {
+            //     if (!active_) {
+            //         // TODO this is actually just the previous estimate
+            //         if ((q_meas - q_prev_).norm() > 0.2) {
+            //             return;
+            //         }
+            //         estimate_.x = y;
+            //         estimate_.P = R;
+            //     } else {
+            //         const GaussianEstimate prediction =
+            //             kf_.predict(estimate_, gravity_, Q, dt);
+            //         const Eigen::Vector3d q_pred = prediction.x.head(3);
+            //         // If measurement disagrees too much with prediction,
+            //         then
+            //         // we reject it
+            //         if ((q_meas - q_pred).norm() > 0.2) {
+            //             estimate_ = prediction;
+            //             return;
+            //         } else {
+            //             estimate_ = kf_.correct(prediction, y, R, dt);
+            //         }
+            //     }
+            // }
+            //     Eigen::Vector3d u = Eigen::Vector3d::Zero();
+            //     if (active_) {
+            //         u = gravity_;
+            //     }
+            //     const GaussianEstimate prediction = kf_.predict(estimate_, u,
+            //     Q, dt); const double nis = kf_.nis(prediction, y, R);
+            //
+            //     if (nis >= 16.812) {
+            //         // do nothing
+            //         std::cout << "rejected: q_meas = " << q_meas.transpose()
+            //         << std::endl;
+            //     // } else if (!active_) {
+            //     //     // If not active we don't do any estimation, we just
+            //     directly
+            //     //     // take the measured value (we don't care about super
+            //     accurate
+            //     //     // estimates when the object is not undergoing
+            //     projectile
+            //     //     // motion)
+            //     //     // TODO this is pretty questionable given the NIS test
+            //     //     estimate_.x = y;
+            //     //     estimate_.P = R;
+            //     } else {
+            //         // Eigen::Vector3d u = Eigen::Vector3d::Zero();
+            //         // if (active_) {
+            //         //     u = gravity_;
+            //         // }
+            //         // const GaussianEstimate prediction =
+            //         kf_.predict(estimate_, gravity_, Q, dt);
+            //
+            //         // Only update the prediction if we pass chi-squared test
+            //         // Pr(X >= 16.812) = 0.01 => 99% chance of being an
+            //         outlier
+            //         // const double nis = kf_.nis(prediction, y, R);
+            //         // if (nis < 16.812) {
+            //             estimate_ = kf_.correct(prediction, y, R, dt);
+            //         // }
+            //
+            //         // estimate_ = kf_.predict(estimate_, gravity_, Q, dt);
+            //         // estimate_ = kf_.correct(estimate_, y, R, dt);
+            //     }
+            // }
         }
 
         t_prev_ = t;
@@ -165,6 +249,7 @@ class ProjectileViconEstimator {
 
     // Subscriber to Vicon pose.
     ros::Subscriber vicon_sub_;
+    ros::Subscriber reset_sub_;
 
     // Store last received time and configuration for numerical differentiation
     double t_prev_;
