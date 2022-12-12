@@ -37,7 +37,11 @@ class ProjectileViconEstimator {
         A.topRightCorner(3, 3) = Eigen::MatrixXd::Identity(3, 3);
         Eigen::MatrixXd B = Eigen::MatrixXd::Zero(6, 3);
         B.bottomRows(3) = Eigen::MatrixXd::Identity(3, 3);
-        Eigen::MatrixXd C = Eigen::MatrixXd::Identity(6, 6);
+
+        // Eigen::MatrixXd C = Eigen::MatrixXd::Identity(6, 6);
+        Eigen::MatrixXd C = Eigen::MatrixXd::Zero(3, 6);
+        C.leftCols(3) = Eigen::MatrixXd::Identity(3, 3);
+
         kf_.init(A, B, C);
 
         std::string vicon_topic;
@@ -119,19 +123,21 @@ class ProjectileViconEstimator {
             }
 
             // Compute velocity via numerical differentiation
-            Eigen::Vector3d v_meas = (q_meas - q_prev_) / dt;
+            // Eigen::Vector3d v_meas = (q_meas - q_prev_) / dt;
 
             // Measurement of the state
-            Eigen::VectorXd y(6);
-            y << q_meas, v_meas;
+            // Eigen::VectorXd y(6);
+            // y << q_meas, v_meas;
+            Eigen::VectorXd y = q_meas;
 
             // Compute process and measurement noise covariance (time-dependent)
             Eigen::Matrix3d I = Eigen::Matrix3d::Identity();
+            Eigen::MatrixXd R = pos_meas_var_ * I;
 
             // clang-format off
-            Eigen::MatrixXd R(6, 6);
-            R << pos_meas_var_ * I, 0 * I,
-                             0 * I, 2 * pos_meas_var_ * I / (dt * dt);
+            // Eigen::MatrixXd R(6, 6);
+            // R << pos_meas_var_ * I, 0 * I,
+            //                  0 * I, 2 * pos_meas_var_ * I / (dt * dt);
 
             Eigen::MatrixXd Q(6, 6);
             Q << dt * dt * pos_proc_var_ * I, 0 * I,
@@ -169,11 +175,15 @@ class ProjectileViconEstimator {
             //     estimate_ = kf_.correct(prediction, y, R, dt);
             // }
             if (msg_count_ == 1) {
-                estimate_.x = y;
-                estimate_.P = R;
+                estimate_.x = Eigen::VectorXd::Zero(6);
+                estimate_.x.head(3) = y;
+                estimate_.P = 100 * Eigen::MatrixXd::Identity(6, 6);  // TODO P0
             } else if (!active_) {
+                // estimate_.x = y;
+                // estimate_.P = R;
+                // TODO here we should be very uncertain
                 const GaussianEstimate prediction =
-                    kf_.predict(estimate_, Eigen::Vector3d::Zero(), R, dt);
+                    kf_.predict(estimate_, Eigen::Vector3d::Zero(), Q, dt);
                 estimate_ = kf_.correct(prediction, y, R, dt);
             } else {
                 const GaussianEstimate prediction =
