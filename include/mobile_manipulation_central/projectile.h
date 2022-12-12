@@ -156,13 +156,25 @@ class ProjectileViconEstimator {
 
             // Reject discontinuous jumps in the measurement
             if ((q_meas - q_prev_).norm() > 0.3) {
-                std::cout << "rejected q_meas = " << q_meas.transpose()
-                          << std::endl;
+                ROS_WARN_STREAM("Rejected q_meas = " << q_meas.transpose());
                 t_prev_ = t;
                 return;
-            } else if (msg_count_ == 1 || !active_) {
+            }
+            // else if (msg_count_ == 1 || !active_) {
+            //     estimate_.x = y;
+            //     estimate_.P = R;
+            // } else {
+            //     const GaussianEstimate prediction =
+            //         kf_.predict(estimate_, gravity_, Q, dt);
+            //     estimate_ = kf_.correct(prediction, y, R, dt);
+            // }
+            if (msg_count_ == 1) {
                 estimate_.x = y;
                 estimate_.P = R;
+            } else if (!active_) {
+                const GaussianEstimate prediction =
+                    kf_.predict(estimate_, Eigen::Vector3d::Zero(), R, dt);
+                estimate_ = kf_.correct(prediction, y, R, dt);
             } else {
                 const GaussianEstimate prediction =
                     kf_.predict(estimate_, gravity_, Q, dt);
