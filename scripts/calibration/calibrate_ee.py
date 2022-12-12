@@ -32,7 +32,7 @@ def main():
     # load calibration data
     data = np.load(args.data_file_name)
     qs = data["qs"]
-    qds = data["qds"]
+    # qds = data["qds"]
     r_tw_ws_meas = data["rs"]
     Q_wts_meas = data["Qs"]
     num_configs = qs.shape[0]
@@ -46,16 +46,15 @@ def main():
         T_wbs.append(T_wb)
 
     # measured transform from base to tool
-    T_bts_meas = []
-    T_tbs_meas = []
+    # T_tbs_meas = []
+    T_tws_meas = []
     for i in range(num_configs):
         C_wt_meas = jaxlie.SO3.from_quaternion_xyzw(Q_wts_meas[i, :])
         T_wt_meas = jaxlie.SE3.from_rotation_and_translation(
             C_wt_meas, r_tw_ws_meas[i, :]
         )
-        T_bt_meas = T_wbs[i].inverse() @ T_wt_meas
-        T_bts_meas.append(T_bt_meas)
-        T_tbs_meas.append(T_bt_meas.inverse())
+        T_tws_meas.append(T_wt_meas.inverse())
+        # T_tbs_meas.append(T_wt_meas.inverse() @ T_wbs[i])
 
     # modelled transform from base to tool
     kinematics = MobileManipulatorKinematics()
@@ -95,11 +94,11 @@ def main():
         # T2 = transform(np.eye(3), r2) @ transform(C2, np.zeros(3))
 
         # T1 = transform(np.eye(3), np.zeros(3))
-        # T2 = transform(np.array([[0., 0, 1], [0, -1, 0], [1, 0, 0]]), r2)
+        # T2 = transform(C2, r2)
 
         cost = 0
         for i in range(num_configs):
-            ΔT = T1 @ T_bts_model[i] @ T2 @ T_tbs_meas[i]
+            ΔT = T_wbs[i] @ T1 @ T_bts_model[i] @ T2 @ T_tws_meas[i]
             e = ΔT.log()
             cost = cost + 0.5 * e @ e
         return cost
@@ -115,11 +114,12 @@ def main():
     def gradient(C1, r1, C2, r2):
         return jgrad(C1, r1, C2, r2)
 
-    # setup and solve the optimization problem
-
+    # initial guess
     C20 = np.array([[0., 0, 1], [0, -1, 0], [1, 0, 0]])
     r20 = np.array([0, 0, 0.3])
     x0 = (np.eye(3), np.zeros(3), C20, r20)
+
+    # setup and solve the optimization problem
     problem = pymanopt.Problem(manifold, cost, euclidean_gradient=gradient)
     line_searcher = pymanopt.optimizers.line_search.BackTrackingLineSearcher()
     optimizer = pymanopt.optimizers.SteepestDescent(line_searcher=line_searcher)
@@ -127,15 +127,14 @@ def main():
 
     # optimal transforms
     T1_opt = transform(result.point[0], result.point[1])
-    # T2_opt = transform(result.point[2], result.point[3])
-    T2_opt = transform(np.eye(3), result.point[3]) @ transform(result.point[2], np.zeros(3))
+    T2_opt = transform(result.point[2], result.point[3])
 
     yaml_dict = {
         "T1": transform_dict(T1_opt),
         "T2": transform_dict(T2_opt),
     }
 
-    IPython.embed()
+    # IPython.embed()
 
     # save parameters to a file for use in control
     if args.output_file_name is not None:
