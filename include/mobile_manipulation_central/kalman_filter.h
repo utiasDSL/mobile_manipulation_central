@@ -9,71 +9,46 @@ struct GaussianEstimate {
     Eigen::MatrixXd P;
 };
 
-// Kalman Filter class, which assumes a constant continuous-time linear model
-// but (potentially) time-varying process and measurement noise.
-class KalmanFilter {
-   public:
-    KalmanFilter() {}
+// Prediction step: predict next state given a priori model and input
+GaussianEstimate kf_predict(const GaussianEstimate& e, const Eigen::MatrixXd& A,
+                            const Eigen::MatrixXd& Q,
+                            const Eigen::VectorXd& v) {
+    GaussianEstimate prediction;
+    prediction.x = A * e.x + v;
+    prediction.P = A * e.P * A.transpose() + Q;
+    return prediction;
+}
 
-    void init(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B,
-              const Eigen::MatrixXd& C) {
-        // \dot{x} = Ax + Bu + Gaussian noise
-        //       y = Cx + Gaussian noise
-        A_ = A;
-        B_ = B;
-        C_ = C;
-    }
+// Correction step: fuse measured output with predicted state
+GaussianEstimate kf_correct(const GaussianEstimate& e, const Eigen::MatrixXd& C,
+                            const Eigen::MatrixXd& R,
+                            const Eigen::VectorXd& y) {
+    // Innovation covariance
+    // Use Cholesky decomposition instead of computing the matrix inverse
+    // in Kalman gain directly
+    Eigen::MatrixXd CP = C * e.P;
+    Eigen::MatrixXd S = CP * C.transpose() + R;
+    Eigen::LLT<Eigen::MatrixXd> LLT = S.llt();
 
-    // Prediction step: predict next state given a apriori model and input
-    GaussianEstimate predict(const GaussianEstimate& e,
-                             const Eigen::VectorXd& u, const Eigen::MatrixXd& Q,
-                             double dt) {
-        // Discretize the system for current timestep
-        Eigen::MatrixXd I = Eigen::MatrixXd::Identity(e.x.rows(), e.x.rows());
-        Eigen::MatrixXd Ad = I + dt * A_;
-        Eigen::MatrixXd Bd = dt * B_;
+    // Correct using measurement model
+    GaussianEstimate correction;
+    correction.P = e.P - CP.transpose() * LLT.solve(CP);
+    correction.x = e.x + CP.transpose() * LLT.solve(y - C * e.x);
+    return correction;
+}
 
-        // Predict using motion model
-        GaussianEstimate prediction;
-        prediction.x = Ad * e.x + Bd * u;
-        prediction.P = Ad * e.P * Ad.transpose() + Q;
-        return prediction;
-    }
+// Compute normalized innovation squared, which can be used for chi-squared
+// hypothesis testing (i.e. reject bad measurements)
+double kf_nis(const GaussianEstimate& e, const Eigen::MatrixXd& C,
+              const Eigen::MatrixXd& R, const Eigen::VectorXd& y) {
+    // Innovation
+    Eigen::VectorXd z = y - C * e.x;
 
-    // Compute normalized innovation squared, which can be used for chi-squared
-    // hypothesis testing (i.e. reject bad measurements)
-    double nis(const GaussianEstimate& e, const Eigen::VectorXd& y, const Eigen::MatrixXd& R) {
-        // Innovation
-        Eigen::VectorXd v = y - C_ * e.x;
+    // Innovation covariance
+    Eigen::MatrixXd S = C * e.P * C.transpose() + R;
+    Eigen::LLT<Eigen::MatrixXd> LLT = S.llt();
 
-        // Innovation covariance
-        Eigen::MatrixXd S = C_ * e.P * C_.transpose() + R;
-        Eigen::LLT<Eigen::MatrixXd> LLT = S.llt();
-
-        return v.dot(LLT.solve(v));
-    }
-
-    // Correction step: fuse measured output with predicted state
-    GaussianEstimate correct(const GaussianEstimate& e,
-                             const Eigen::VectorXd& y, const Eigen::MatrixXd& R,
-                             double dt) {
-        // Innovation covariance
-        // Use Cholesky decomposition instead of computing the matrix inverse
-        // in Kalman gain directly
-        Eigen::MatrixXd S = C_ * e.P * C_.transpose() + R;
-        Eigen::LLT<Eigen::MatrixXd> LLT = S.llt();
-
-        // Correct using measurement model
-        GaussianEstimate correction;
-        correction.P = e.P - e.P * C_.transpose() * LLT.solve(C_ * e.P);
-        correction.x = e.x + e.P * C_.transpose() * LLT.solve(y - C_ * e.x);
-        return correction;
-    }
-
-   private:
-    Eigen::MatrixXd A_;
-    Eigen::MatrixXd B_;
-    Eigen::MatrixXd C_;
-};
+    return z.dot(LLT.solve(z));
+}
 
 }  // namespace mm

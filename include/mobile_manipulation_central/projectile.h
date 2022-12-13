@@ -23,26 +23,11 @@ class ProjectileViconEstimator {
 
     ProjectileViconEstimator() {}
 
-    bool init(ros::NodeHandle& nh, double pos_proc_var, double vel_proc_var,
-              double pos_meas_var, const Eigen::Vector3d& gravity) {
-        pos_proc_var_ = pos_proc_var;
-        vel_proc_var_ = vel_proc_var;
-        pos_meas_var_ = pos_meas_var;
+    bool init(ros::NodeHandle& nh, double proc_var, double meas_var,
+              const Eigen::Vector3d& gravity) {
+        proc_var_ = proc_var;
+        meas_var_ = meas_var;
         gravity_ = gravity;
-
-        // Initialize the Kalman filter
-        // A = |0 I|  B = |0|  C = I
-        //     |0 0|      |I|
-        Eigen::MatrixXd A = Eigen::MatrixXd::Zero(6, 6);
-        A.topRightCorner(3, 3) = Eigen::MatrixXd::Identity(3, 3);
-        Eigen::MatrixXd B = Eigen::MatrixXd::Zero(6, 3);
-        B.bottomRows(3) = Eigen::MatrixXd::Identity(3, 3);
-
-        // Eigen::MatrixXd C = Eigen::MatrixXd::Identity(6, 6);
-        Eigen::MatrixXd C = Eigen::MatrixXd::Zero(3, 6);
-        C.leftCols(3) = Eigen::MatrixXd::Identity(3, 3);
-
-        kf_.init(A, B, C);
 
         std::string vicon_topic;
         nh.param<std::string>("vicon_topic", vicon_topic,
@@ -50,10 +35,8 @@ class ProjectileViconEstimator {
         nh.param<double>("activation_height", activation_height_, 1.0);
         nh.param<double>("deactivation_height", deactivation_height_, 0.2);
 
-        // 30 m/s is approximately the velocity of an object dropped from rest
-        // from a height of 3 meters once it reaches the floor. We should never
-        // go beyond that here.
-        nh.param<double>("max_projectile_velocity", max_velocity_, 30);
+        // 14.156 corresponds to 3-sigma bound for 3-dim Gaussian variable
+        nh.param<double>("nis_bound_", nis_bound_, 14.156);
 
         vicon_sub_ = nh.subscribe(vicon_topic, 1,
                                   &ProjectileViconEstimator::vicon_cb, this);
@@ -67,7 +50,7 @@ class ProjectileViconEstimator {
     }
 
     // True if enough messages have been received so all data is initialized.
-    bool ready() const { return msg_count_ > 1; }
+    bool ready() const { return msg_count_ > 0; }
 
     // Get number of Vicon messages received
     size_t get_num_msgs() const { return msg_count_; }
@@ -82,7 +65,7 @@ class ProjectileViconEstimator {
     /* FUNCTIONS */
 
     void reset_cb(const std_msgs::Empty&) {
-        std::cout << "Projectile estimate reset." << std::endl;
+        ROS_INFO("Projectile estimate reset.");
         msg_count_ = 0;
         active_ = false;
     }
@@ -94,176 +77,69 @@ class ProjectileViconEstimator {
         q_meas << msg.transform.translation.x, msg.transform.translation.y,
             msg.transform.translation.z;
 
-        // bool switched = false;
-
         // We assume the projectile is in flight (i.e. subject to gravitational
         // acceleration) if it is above a certain height and has not yet
         // reached a certain minimum height. Otherwise, we assume acceleration
         // is zero.
+        // TODO probably better to use the estimate for this
         if (active_ && q_meas(2) <= deactivation_height_) {
             active_ = false;
-            // switched = true;
         }
         if (!active_ && q_meas(2) >= activation_height_) {
             active_ = true;
-            // reset the estimate here?
-            // switched = true;
         }
 
-        // Wait until we have at least two messages so we can numerically
-        // differentiate.
-        if (msg_count_ >= 1) {
+        if (msg_count_ == 0) {
+            // Initialize the estimate
+            estimate_.x = Eigen::VectorXd::Zero(6);
+            estimate_.x.head(3) = q_meas;
+            estimate_.P = Eigen::MatrixXd::Identity(6, 6);  // TODO P0
+        } else if (msg_count_ >= 1) {
             double dt = t - t_prev_;
 
-            // Skip this measurement if not enough time has elapsed, to avoid
-            // numerical problems.
-            if (dt < 1e-6) {
-                ROS_WARN("Time between Vicon messages is very small.");
-                return;
-            }
-
-            // Compute velocity via numerical differentiation
-            // Eigen::Vector3d v_meas = (q_meas - q_prev_) / dt;
-
-            // Measurement of the state
-            // Eigen::VectorXd y(6);
-            // y << q_meas, v_meas;
             Eigen::VectorXd y = q_meas;
 
-            // Compute process and measurement noise covariance (time-dependent)
+            // Compute system matrices
             Eigen::Matrix3d I = Eigen::Matrix3d::Identity();
-            Eigen::MatrixXd R = pos_meas_var_ * I;
 
-            // clang-format off
-            // Eigen::MatrixXd R(6, 6);
-            // R << pos_meas_var_ * I, 0 * I,
-            //                  0 * I, 2 * pos_meas_var_ * I / (dt * dt);
+            Eigen::MatrixXd A = Eigen::MatrixXd::Identity(6, 6);
+            A.topRightCorner(3, 3) = dt * I;
 
-            Eigen::MatrixXd Q(6, 6);
-            Q << dt * dt * pos_proc_var_ * I, 0 * I,
-                                       0 * I, dt * dt * vel_proc_var_ * I;
-            // clang-format on
+            Eigen::MatrixXd B(6, 3);
+            B << 0.5 * dt * dt * I, dt * I;
 
-            // Reset estimated covariance if we switch in or out of projectile
-            // flight
-            // if (switched) {
-            //     estimate_.P = R;
-            // }
+            Eigen::MatrixXd C = Eigen::MatrixXd::Zero(3, 6);
+            C.leftCols(3) = I;
 
-            // Apply Kalman filter to estimate state
-            // if (v_meas.norm() > max_velocity_) {
-            //     // Reset the estimate when we have a large velocity change
-            //     // XXX This is a bit of a hack to deal with resetting
-            //     obstacles
-            //     // in simulation, which results in large state
-            //     discontinuities estimate_.x << q_meas, 0, 0, 0; estimate_.P =
-            //     R;
-            // } else if (msg_count_ == 1 || !active_) {
+            // Compute process and measurement noise covariance
+            Eigen::MatrixXd Q = proc_var_ * B * B.transpose();
+            Eigen::MatrixXd R = meas_var_ * I;
 
-            // Reject discontinuous jumps in the measurement
-            if ((q_meas - q_prev_).norm() > 0.3) {
+            Eigen::Vector3d u = Eigen::Vector3d::Zero();
+            if (active_) {
+                u = gravity_;
+            }
+
+            // Predict new state
+            // We know that the ball cannot penetrate the floor, so we don't
+            // let it
+            GaussianEstimate prediction = kf_predict(estimate_, A, Q, B * u);
+            if (prediction.x(2) <= 0) {
+                prediction.x(2) = 0;
+            }
+
+            // Update the estimate if measurement falls within likely range
+            const double nis = kf_nis(prediction, C, R, y);
+            if (nis >= nis_bound_) {
                 ROS_WARN_STREAM("Rejected q_meas = " << q_meas.transpose());
-                t_prev_ = t;
+                estimate_ = prediction;
                 return;
-            }
-            // else if (msg_count_ == 1 || !active_) {
-            //     estimate_.x = y;
-            //     estimate_.P = R;
-            // } else {
-            //     const GaussianEstimate prediction =
-            //         kf_.predict(estimate_, gravity_, Q, dt);
-            //     estimate_ = kf_.correct(prediction, y, R, dt);
-            // }
-            if (msg_count_ == 1) {
-                estimate_.x = Eigen::VectorXd::Zero(6);
-                estimate_.x.head(3) = y;
-                estimate_.P = 100 * Eigen::MatrixXd::Identity(6, 6);  // TODO P0
-            } else if (!active_) {
-                // estimate_.x = y;
-                // estimate_.P = R;
-                // TODO here we should be very uncertain
-                const GaussianEstimate prediction =
-                    kf_.predict(estimate_, Eigen::Vector3d::Zero(), Q, dt);
-                estimate_ = kf_.correct(prediction, y, R, dt);
             } else {
-                const GaussianEstimate prediction =
-                    kf_.predict(estimate_, gravity_, Q, dt);
-                estimate_ = kf_.correct(prediction, y, R, dt);
+                estimate_ = kf_correct(prediction, C, R, y);
             }
-
-            // TODO clean up
-            // if (msg_count_ == 1) {
-            //     estimate_.x = y;
-            //     estimate_.P = R;
-            // } else {
-            //     if (!active_) {
-            //         // TODO this is actually just the previous estimate
-            //         if ((q_meas - q_prev_).norm() > 0.2) {
-            //             return;
-            //         }
-            //         estimate_.x = y;
-            //         estimate_.P = R;
-            //     } else {
-            //         const GaussianEstimate prediction =
-            //             kf_.predict(estimate_, gravity_, Q, dt);
-            //         const Eigen::Vector3d q_pred = prediction.x.head(3);
-            //         // If measurement disagrees too much with prediction,
-            //         then
-            //         // we reject it
-            //         if ((q_meas - q_pred).norm() > 0.2) {
-            //             estimate_ = prediction;
-            //             return;
-            //         } else {
-            //             estimate_ = kf_.correct(prediction, y, R, dt);
-            //         }
-            //     }
-            // }
-            //     Eigen::Vector3d u = Eigen::Vector3d::Zero();
-            //     if (active_) {
-            //         u = gravity_;
-            //     }
-            //     const GaussianEstimate prediction = kf_.predict(estimate_, u,
-            //     Q, dt); const double nis = kf_.nis(prediction, y, R);
-            //
-            //     if (nis >= 16.812) {
-            //         // do nothing
-            //         std::cout << "rejected: q_meas = " << q_meas.transpose()
-            //         << std::endl;
-            //     // } else if (!active_) {
-            //     //     // If not active we don't do any estimation, we just
-            //     directly
-            //     //     // take the measured value (we don't care about super
-            //     accurate
-            //     //     // estimates when the object is not undergoing
-            //     projectile
-            //     //     // motion)
-            //     //     // TODO this is pretty questionable given the NIS test
-            //     //     estimate_.x = y;
-            //     //     estimate_.P = R;
-            //     } else {
-            //         // Eigen::Vector3d u = Eigen::Vector3d::Zero();
-            //         // if (active_) {
-            //         //     u = gravity_;
-            //         // }
-            //         // const GaussianEstimate prediction =
-            //         kf_.predict(estimate_, gravity_, Q, dt);
-            //
-            //         // Only update the prediction if we pass chi-squared test
-            //         // Pr(X >= 16.812) = 0.01 => 99% chance of being an
-            //         outlier
-            //         // const double nis = kf_.nis(prediction, y, R);
-            //         // if (nis < 16.812) {
-            //             estimate_ = kf_.correct(prediction, y, R, dt);
-            //         // }
-            //
-            //         // estimate_ = kf_.predict(estimate_, gravity_, Q, dt);
-            //         // estimate_ = kf_.correct(estimate_, y, R, dt);
-            //     }
-            // }
         }
 
         t_prev_ = t;
-        q_prev_ = q_meas;
         ++msg_count_;
     }
 
@@ -275,18 +151,15 @@ class ProjectileViconEstimator {
 
     // Store last received time and configuration for numerical differentiation
     double t_prev_;
-    Eigen::Vector3d q_prev_;
 
     // Process and noise variance
-    double pos_proc_var_;
-    double vel_proc_var_;
-    double pos_meas_var_;
+    double proc_var_;
+    double meas_var_;
 
     Eigen::Vector3d gravity_;
 
     // State estimate and Kalman filter
     GaussianEstimate estimate_;
-    KalmanFilter kf_;
 
     bool active_ = false;
 
@@ -299,9 +172,8 @@ class ProjectileViconEstimator {
     // the ground)
     double deactivation_height_;
 
-    // Maximum allowed measured velocity. The estimate is not updated if the
-    // measured velocity if above this value.
-    double max_velocity_;
+    // Measurement is rejected if NIS is above this bound
+    double nis_bound_;
 
     // Number of messages received
     size_t msg_count_ = 0;
@@ -312,10 +184,10 @@ class ProjectileViconEstimatorNode {
    public:
     ProjectileViconEstimatorNode() {}
 
-    void init(ros::NodeHandle& nh, const std::string& name, double pos_proc_var,
-              double vel_proc_var, double pos_meas_var) {
+    void init(ros::NodeHandle& nh, const std::string& name, double proc_var,
+              double meas_var) {
         Eigen::Vector3d gravity(0, 0, -9.81);
-        estimator_.init(nh, pos_proc_var, vel_proc_var, pos_meas_var, gravity);
+        estimator_.init(nh, proc_var, meas_var, gravity);
 
         joint_states_pub_ =
             nh.advertise<sensor_msgs::JointState>(name + "/joint_states", 1);
