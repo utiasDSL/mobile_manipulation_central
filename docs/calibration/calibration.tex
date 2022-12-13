@@ -114,10 +114,7 @@ transform~$\bm{T}_{ae}(\bm{q}_a)$ is good enough.
 To do so, we will collect a sequence of
 pairs~$(\bm{q}_{a,i},\hat{\bm{T}}_{wt,i})$ by moving the arm to the sequence of
 configurations~$\bm{q}_{a,i}$. We will then solve the (nonlinear) least squares
-problem\footnote{We may have nominal guesses for the transforms, in which case
-we would actually optimize over (for example)~$\Delta\bm{T}_{ba}$,
-where~$\bm{T}_{ba}=\Delta\bm{T}_{ba}\bar{\bm{T}}_{ba}$ with nominal
-guess~$\bar{\bm{T}}_{ba}$.}
+problem
 \begin{equation}
   \argmin_{\bm{T}_{ba},\bm{T}_{wt}}\ \frac{1}{2}\sum_i\|\boxminus(\bm{T}_{wt}(\bm{q}),\hat{\bm{T}}_{wt})\|^2.
 \end{equation}
@@ -125,7 +122,8 @@ over the manifold~$SE(3)$, where~$\bm{T}_{wt}$ is computed using~\eqref{eq:kinem
 \begin{equation}
   \boxminus(\bm{T}_1,\bm{T}_2) = \log(\bm{T}_1^{-1}\bm{T}_2)^\vee
 \end{equation}
-is the error between the poses.
+is the error between the poses. We can include any prior information about the
+transforms as an initial guess for the solver.
 
 
 \end{document}
