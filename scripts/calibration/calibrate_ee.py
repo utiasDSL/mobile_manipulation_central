@@ -14,8 +14,6 @@ import jaxlie
 
 from mobile_manipulation_central import MobileManipulatorKinematics
 
-import IPython
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -46,7 +44,6 @@ def main():
         T_wbs.append(T_wb)
 
     # measured transform from base to tool
-    # T_tbs_meas = []
     T_tws_meas = []
     for i in range(num_configs):
         C_wt_meas = jaxlie.SO3.from_quaternion_xyzw(Q_wts_meas[i, :])
@@ -54,7 +51,6 @@ def main():
             C_wt_meas, r_tw_ws_meas[i, :]
         )
         T_tws_meas.append(T_wt_meas.inverse())
-        # T_tbs_meas.append(T_wt_meas.inverse() @ T_wbs[i])
 
     # modelled transform from base to tool
     kinematics = MobileManipulatorKinematics()
@@ -90,12 +86,6 @@ def main():
         T1 = transform(C1, r1)
         T2 = transform(C2, r2)
 
-        # T1 = transform(C1, r1)
-        # T2 = transform(np.eye(3), r2) @ transform(C2, np.zeros(3))
-
-        # T1 = transform(np.eye(3), np.zeros(3))
-        # T2 = transform(C2, r2)
-
         cost = 0
         for i in range(num_configs):
             ΔT = T_wbs[i] @ T1 @ T_bts_model[i] @ T2 @ T_tws_meas[i]
@@ -115,7 +105,7 @@ def main():
         return jgrad(C1, r1, C2, r2)
 
     # initial guess
-    C20 = np.array([[0., 0, 1], [0, -1, 0], [1, 0, 0]])
+    C20 = np.array([[0.0, 0, 1], [0, -1, 0], [1, 0, 0]])
     r20 = np.array([0, 0, 0.3])
     x0 = (np.eye(3), np.zeros(3), C20, r20)
 
@@ -134,7 +124,7 @@ def main():
         "T2": transform_dict(T2_opt),
     }
 
-    # IPython.embed()
+    print(yaml.dump(yaml_dict))
 
     # save parameters to a file for use in control
     if args.output_file_name is not None:
@@ -143,8 +133,6 @@ def main():
         with open(output_file_name, "w") as f:
             yaml.dump(yaml_dict, f)
         print(f"Saved transform data to {output_file_name}.")
-    else:
-        print(yaml_dict)
 
 
 if __name__ == "__main__":
