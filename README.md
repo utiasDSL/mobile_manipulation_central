@@ -124,22 +124,22 @@ the limits are:
 
 | Joint | Velocity  | Acceleration |
 | ----- | --------- | ------------ |
-| x     | 1.1 m/s   | 2.5 m/s^2    |
-| y     | 1.1 m/s   | 2.5 m/s^2    |
-| yaw   | 2.0 rad/s | 1.0 rad/s^2  |
+| x     | 1.1 m/s   | 2.5 m/s²     |
+| y     | 1.1 m/s   | 2.5 m/s²     |
+| yaw   | 2.0 rad/s | 1.0 rad/s²   |
 
 ### UR10 limits
 With reference to the UR10 datasheet as well as the onboard UR10 configuration
 files (for acceleration), the joint limits are:
 
-| Joint | Position (rad) | Velocity (rad/s)  | Acceleration (rad/s^2) |
+| Joint | Position (rad) | Velocity (rad/s)  | Acceleration (rad/s²)  |
 | ----- | -------------- | ----------------- | ---------------------- |
-| 1     | +/- 2π         | ±⅔π               | +/- 40                 |
-| 2     | +/- 2 pi       | +/- 2/3 pi        | +/- 40                 |
-| 3     | +/- 2 pi       | +/- pi            | +/- 40                 |
-| 4     | +/- 2 pi       | +/- pi            | +/- 40                 |
-| 5     | +/- 2 pi       | +/- pi            | +/- 40                 |
-| 6     | +/- 2 pi       | +/- pi            | +/- 40                 |
+| 1     | ± 2π           | ± ⅔π              | ± 40                   |
+| 2     | ± 2π           | ± ⅔π              | ± 40                   |
+| 3     | ± 2π           | ± π               | ± 40                   |
+| 4     | ± 2π           | ± π               | ± 40                   |
+| 5     | ± 2π           | ± π               | ± 40                   |
+| 6     | ± 2π           | ± π               | ± 40                   |
 
 ## Misc notes
 * The Ridgeback controller automatically publishes a zero command (i.e. brake)
