@@ -215,7 +215,7 @@ joints.
   />
 
   <!-- Join arm to the base -->
-  <joint name="ur10_arm_base" type="fixed">
+  <joint name="ur10_arm_base_joint" type="fixed">
     <parent link="arch_link"/>
     <child link="ur10_arm_base_link"/>
     <origin rpy="0.0 0.0 3.14159265359" xyz="0.01 -0.27 0.375"/>
