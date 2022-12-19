@@ -66,6 +66,11 @@ unset ROS_HOSTNAME
 It is convenient to put the above functions in a script that can be easily
 sourced.
 
+Connect to the robot via ethernet and set up a new Wired Connection named
+`Thing`. In the `IPv4 Settings` tab, switch to method `Manual` and enter an
+address of `192.168.131.100` with netmask `255.255.255.0`. Leave the gateway
+blank. Once done, you should be able to ping the robot at `192.168.131.1`.
+
 ## Usage
 
 Some scripts expect the environment variable
@@ -129,7 +134,7 @@ files (for acceleration), the joint limits are:
 
 | Joint | Position (rad) | Velocity (rad/s)  | Acceleration (rad/s^2) |
 | ----- | -------------- | ----------------- | ---------------------- |
-| 1     | +/- 2 pi       | +/- 2/3 pi        | +/- 40                 |
+| 1     | +/- 2π         | ±⅔π               | +/- 40                 |
 | 2     | +/- 2 pi       | +/- 2/3 pi        | +/- 40                 |
 | 3     | +/- 2 pi       | +/- pi            | +/- 40                 |
 | 4     | +/- 2 pi       | +/- pi            | +/- 40                 |
