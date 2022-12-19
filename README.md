@@ -32,8 +32,19 @@ cd catkin_ws/src
 git clone https://github.com/utiasDSL/dsl__projects__mobile_manipulation_central mobile_manipulation_central
 ```
 
-Install dependencies into the catkin workspace:
-* [Eigen](https://eigen.tuxfamily.org) - `sudo apt install libeigen3-dev`
+Install [Eigen](https://eigen.tuxfamily.org): `sudo apt install libeigen3-dev`
+
+For kinematics, [pinocchio](https://github.com/stack-of-tasks/pinocchio) is
+required. I prefer to build this outside of the catkin workspace. Refer to the
+[upright](https://github.com/utiasDSL/dsl__projects__tray_balance) README.
+
+Install Python dependencies:
+```
+python3 -m pip install -r requirements.txt
+```
+
+For working with real hardware, install the following packages into the catkin
+workspace:
 * [ur_robot_driver](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver) - for the UR10 arm.
 * [robotiq](https://github.com/TAMS-Group/robotiq) - for the Robotiq 3F gripper. This is a fork of the original (now unmaintained) repo.
 * [vicon_bridge](https://github.com/ethz-asl/vicon_bridge) - required to track
