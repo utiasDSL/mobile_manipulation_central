@@ -23,9 +23,6 @@ CONVERGENCE_TOL = 1e-3
 RATE = 125  # Hz
 EE_OBJECT_NAME = "ThingWoodTray"
 
-# desired base configuration is the same for each
-# DESIRED_BASE_CONFIGURATION = np.array([-1, 0, 0])
-
 # fmt: off
 # last arm configuration is same as the first, so the robot goes back when done
 # calibrating

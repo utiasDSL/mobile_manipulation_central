@@ -196,13 +196,18 @@ def slerp(q0, q1, s):
 
 
 # TODO not ROS specific, so consider moving elsewhere
-def interpolate_list(times1, times2, values, method="lerp"):
-    """Align values in `values2` with the times `times11 using linear interpolation.
+def interpolate_list(new_times, old_times, values, method="lerp"):
+    """Align `values` (corresponding to `old_times`) with the `new_times` using
+    interpolation.
 
     Each value in `values` should be a scalar or numpy array (i.e. something
     that can be scaled and added).
 
-    Returns a new list of values corresponding to `times1`.
+    `method` is the interpolation method. Linear interpolation `lerp` is the
+    default. Alternative is `slerp` for spherical linear interpolation when the
+    data to be interpolated is quaternions (in xyzw order).
+
+    Returns a new list of values corresponding to `new_times`.
     """
     if method == "slerp":
         interp_func = slerp
@@ -211,27 +216,30 @@ def interpolate_list(times1, times2, values, method="lerp"):
 
     aligned_values = []
     idx2 = 0
-    n1 = len(times1)
-    n2 = len(times2)
+    n1 = len(new_times)
+    n2 = len(old_times)
     for idx1 in range(n1):
-        t = times1[idx1]
+        t = new_times[idx1]
 
-        if t <= times2[0]:
+        # time is before the values start: pad with the first value
+        if t <= old_times[0]:
             aligned_values.append(values[0])
             continue
-        if t >= times2[-1]:
+
+        # time is after values end: pad with the last value
+        if t >= old_times[-1]:
             aligned_values.append(values[-1])
             continue
 
-        # iterate through times2 until a more recent value found
-        while idx2 + 1 < n2 and times2[idx2 + 1] < t:
+        # iterate through old_times until a more recent value found
+        while idx2 + 1 < n2 and old_times[idx2 + 1] < t:
             idx2 += 1
 
-        assert times2[idx2] <= t <= times2[idx2 + 1]
+        assert old_times[idx2] <= t <= old_times[idx2 + 1]
 
         # interpolate between values[idx2] and values[idx2 + 1]
-        Δt = times2[idx2 + 1] - times2[idx2]
-        s = (t - times2[idx2]) / Δt
+        Δt = old_times[idx2 + 1] - old_times[idx2]
+        s = (t - old_times[idx2]) / Δt
         value = interp_func(values[idx2], values[idx2 + 1], s)
         aligned_values.append(value)
 

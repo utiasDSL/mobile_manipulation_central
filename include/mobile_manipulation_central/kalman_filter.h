@@ -4,6 +4,8 @@
 
 namespace mm {
 
+// TODO kind of want to put this in a sub-namespace kf
+
 struct GaussianEstimate {
     Eigen::VectorXd x;
     Eigen::MatrixXd P;
