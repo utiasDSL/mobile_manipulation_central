@@ -7,10 +7,11 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   geometry_msgs
   sensor_msgs
-  # pybind11_catkin
+  urdf
 )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(pinocchio REQUIRED)
 
 # Python setup
 catkin_python_setup()
@@ -28,12 +29,14 @@ catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES mobile_manipulation_central
 #  CATKIN_DEPENDS other_catkin_pkg
-   DEPENDS Eigen3
+   DEPENDS Eigen3 pinocchio
 )
 
 ###########
 ## Build ##
 ###########
+
+set(FLAGS ${pinocchio_CFLAGS_OTHER})
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
@@ -41,6 +44,10 @@ include_directories(
  include
  ${catkin_INCLUDE_DIRS}
  ${EIGEN3_INCLUDE_DIRS}
+ ${pinocchio_INCLUDE_DIRS}
+)
+link_directories(
+  ${pinocchio_LIBRARY_DIRS}
 )
 
 # NOTE: bindings are not currently useful, so not built
@@ -69,6 +76,12 @@ target_link_libraries(ridgeback_vicon_estimator_node
 add_executable(projectile_vicon_estimator_node src/projectile_vicon_estimator_node.cpp)
 target_link_libraries(projectile_vicon_estimator_node
   ${catkin_LIBRARIES}
+)
+
+add_executable(kinematics_example src/kinematics_example.cpp)
+target_link_libraries(kinematics_example
+  ${catkin_LIBRARIES}
+  ${pinocchio_LIBRARIES}
 )
 
 #############

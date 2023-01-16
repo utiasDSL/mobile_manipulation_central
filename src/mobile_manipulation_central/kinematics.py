@@ -8,15 +8,10 @@ from mobile_manipulation_central.ros_utils import compile_xacro
 
 
 class RobotKinematics:
-    def __init__(self, nq, nv, urdf_str, root_joint=None, tool_link_name=None):
-        """Load the model from a URDF represented as a string."""
-        self.nq = nq
-        self.nv = nv
-
-        if root_joint is not None:
-            self.model = pinocchio.buildModelFromXML(urdf_str, root_joint)
-        else:
-            self.model = pinocchio.buildModelFromXML(urdf_str)
+    def __init__(self, model, tool_link_name=None):
+        self.model = model
+        self.nq = model.nq
+        self.nv = model.nv
         self.data = self.model.createData()
 
         if tool_link_name is not None:
@@ -25,13 +20,20 @@ class RobotKinematics:
             self.tool_idx = None
 
     @classmethod
-    def from_urdf_file(
-        cls, nq, nv, urdf_file_path, root_joint=None, tool_link_name=None
-    ):
+    def from_urdf_string(cls, urdf_str, root_joint=None, tool_link_name=None):
+        """Load the model from a URDF represented as a string."""
+        if root_joint is not None:
+            model = pinocchio.buildModelFromXML(urdf_str, root_joint)
+        else:
+            model = pinocchio.buildModelFromXML(urdf_str)
+        return cls(model, tool_link_name)
+
+    @classmethod
+    def from_urdf_file(cls, urdf_file_path, root_joint=None, tool_link_name=None):
         """Load the model directly from a URDF file."""
         with open(urdf_file_path) as f:
             urdf_str = f.read()
-        return cls(nq, nv, urdf_str, root_joint, tool_link_name)
+        return cls.from_urdf_string(urdf_str, root_joint, tool_link_name)
 
     def forward(self, q, v=None, a=None):
         """Forward kinematics using (q, v, a) all in the world frame (i.e.,
@@ -163,9 +165,7 @@ class RobotKinematics:
 
 class MobileManipulatorKinematics(RobotKinematics):
     # TODO support args to the xacro file
-    def __init__(
-        self, filename="thing_no_wheels.urdf.xacro", tool_link_name="gripper"
-    ):
+    def __init__(self, filename="thing_no_wheels.urdf.xacro", tool_link_name="gripper"):
         rospack = rospkg.RosPack()
         xacro_path = (
             Path(rospack.get_path("mobile_manipulation_central"))
@@ -180,10 +180,6 @@ class MobileManipulatorKinematics(RobotKinematics):
         root_joint.addJoint(pinocchio.JointModelPY())
         root_joint.addJoint(pinocchio.JointModelRZ())
 
-        super().__init__(
-            nq=9,
-            nv=9,
-            urdf_str=urdf_str,
-            root_joint=root_joint,
-            tool_link_name=tool_link_name,
-        )
+        model = pinocchio.buildModelFromXML(urdf_str, root_joint)
+
+        super().__init__(model, tool_link_name)
