@@ -31,7 +31,7 @@ class ProjectileViconEstimator {
 
         std::string vicon_topic;
         nh.param<std::string>("vicon_topic", vicon_topic,
-                              "/vicon/Projectile/Projectile");
+                              "/vicon/ThingProjectile/ThingProjectile");
         nh.param<double>("activation_height", activation_height_, 1.0);
         nh.param<double>("deactivation_height", deactivation_height_, 0.2);
 
@@ -123,19 +123,19 @@ class ProjectileViconEstimator {
             // Predict new state
             // We know that the ball cannot penetrate the floor, so we don't
             // let it
-            GaussianEstimate prediction = kf_predict(estimate_, A, Q, B * u);
+            kf::GaussianEstimate prediction = kf::predict(estimate_, A, Q, B * u);
             if (prediction.x(2) <= 0) {
                 prediction.x(2) = 0;
             }
 
             // Update the estimate if measurement falls within likely range
-            const double nis = kf_nis(prediction, C, R, y);
+            const double nis = kf::nis(prediction, C, R, y);
             if (nis >= nis_bound_) {
                 ROS_WARN_STREAM("Rejected q_meas = " << q_meas.transpose());
                 estimate_ = prediction;
                 return;
             } else {
-                estimate_ = kf_correct(prediction, C, R, y);
+                estimate_ = kf::correct(prediction, C, R, y);
             }
         }
 
@@ -159,7 +159,7 @@ class ProjectileViconEstimator {
     Eigen::Vector3d gravity_;
 
     // State estimate and Kalman filter
-    GaussianEstimate estimate_;
+    kf::GaussianEstimate estimate_;
 
     bool active_ = false;
 

@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
     std::cout << "meas_var = " << meas_var << std::endl;
 
     mm::ProjectileViconEstimatorNode node;
-    node.init(nh, "Projectile", proc_var, meas_var);
+    node.init(nh, "ThingProjectile", proc_var, meas_var);
     node.spin(rate);
 
     return 0;

@@ -3,8 +3,7 @@
 #include <Eigen/Eigen>
 
 namespace mm {
-
-// TODO kind of want to put this in a sub-namespace kf
+namespace kf {
 
 struct GaussianEstimate {
     Eigen::VectorXd x;
@@ -12,9 +11,8 @@ struct GaussianEstimate {
 };
 
 // Prediction step: predict next state given a priori model and input
-GaussianEstimate kf_predict(const GaussianEstimate& e, const Eigen::MatrixXd& A,
-                            const Eigen::MatrixXd& Q,
-                            const Eigen::VectorXd& v) {
+GaussianEstimate predict(const GaussianEstimate& e, const Eigen::MatrixXd& A,
+                         const Eigen::MatrixXd& Q, const Eigen::VectorXd& v) {
     GaussianEstimate prediction;
     prediction.x = A * e.x + v;
     prediction.P = A * e.P * A.transpose() + Q;
@@ -22,9 +20,8 @@ GaussianEstimate kf_predict(const GaussianEstimate& e, const Eigen::MatrixXd& A,
 }
 
 // Correction step: fuse measured output with predicted state
-GaussianEstimate kf_correct(const GaussianEstimate& e, const Eigen::MatrixXd& C,
-                            const Eigen::MatrixXd& R,
-                            const Eigen::VectorXd& y) {
+GaussianEstimate correct(const GaussianEstimate& e, const Eigen::MatrixXd& C,
+                         const Eigen::MatrixXd& R, const Eigen::VectorXd& y) {
     // Innovation covariance
     // Use Cholesky decomposition instead of computing the matrix inverse
     // in Kalman gain directly
@@ -41,8 +38,8 @@ GaussianEstimate kf_correct(const GaussianEstimate& e, const Eigen::MatrixXd& C,
 
 // Compute normalized innovation squared, which can be used for chi-squared
 // hypothesis testing (i.e. reject bad measurements)
-double kf_nis(const GaussianEstimate& e, const Eigen::MatrixXd& C,
-              const Eigen::MatrixXd& R, const Eigen::VectorXd& y) {
+double nis(const GaussianEstimate& e, const Eigen::MatrixXd& C,
+           const Eigen::MatrixXd& R, const Eigen::VectorXd& y) {
     // Innovation
     Eigen::VectorXd z = y - C * e.x;
 
@@ -53,4 +50,5 @@ double kf_nis(const GaussianEstimate& e, const Eigen::MatrixXd& C,
     return z.dot(LLT.solve(z));
 }
 
+}  // namespace kf
 }  // namespace mm
