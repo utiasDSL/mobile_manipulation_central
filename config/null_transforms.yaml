@@ -1,7 +1,7 @@
 # no calibration for base-arm or tool
-T1:
+base_to_arm_transform:
   rpy: [0, 0, 0]
   xyz: [0, 0, 0]
-T2:
+gripped_object_transform:
   rpy: [0, 0, 0]
   xyz: [0, 0, 0]

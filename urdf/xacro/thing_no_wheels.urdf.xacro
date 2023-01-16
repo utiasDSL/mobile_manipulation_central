@@ -54,13 +54,9 @@ joints.
      <origin rpy="0 0 0" xyz="0 0 0"/>
     </inertial>
   </link>
-  <!-- <joint name="base_link_joint" type="fixed"> -->
-  <!--   <origin rpy="0 0 0" xyz="0 0 0"/> -->
-  <!--   <parent link="base_link"/> -->
-  <!--   <child link="chassis_link"/> -->
-  <!-- </joint> -->
+  <!-- Transform between base and arm can be calibrated and is loaded from parameters. -->
   <joint name="base_link_joint" type="fixed">
-    <xacro:transformed_origin name="T1" />
+    <xacro:transformed_origin name="base_to_arm_transform" />
     <parent link="base_link"/>
     <child link="chassis_link"/>
   </joint>
@@ -249,7 +245,7 @@ joints.
   <!-- If you want to have an object as part of the URDF, include something like: -->
   <!-- <link name="gripped_object" /> -->
   <!-- <joint name="gripped_object_joint" type="fixed"> -->
-  <!--   <xacro:transformed_origin name="T2" /> -->
+  <!--   <xacro:transformed_origin name="gripped_object_transform" /> -->
   <!--   <parent link="gripper"/> -->
   <!--   <child link="gripped_object"/> -->
   <!-- </joint> -->

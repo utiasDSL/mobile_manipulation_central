@@ -83,8 +83,8 @@ def main():
 
     # jax-version of cost for autodiff
     def jcost(C1, r1, C2, r2):
-        T1 = transform(C1, r1)
-        T2 = transform(C2, r2)
+        T1 = transform(C1, r1)  # base to arm transform
+        T2 = transform(C2, r2)  # EE to tray (or other gripped object) transform
 
         cost = 0
         for i in range(num_configs):
@@ -120,8 +120,8 @@ def main():
     T2_opt = transform(result.point[2], result.point[3])
 
     yaml_dict = {
-        "T1": transform_dict(T1_opt),
-        "T2": transform_dict(T2_opt),
+        "base_to_arm_transform": transform_dict(T1_opt),
+        "ee_to_tray_transform": transform_dict(T2_opt),
     }
 
     print(yaml.dump(yaml_dict))
