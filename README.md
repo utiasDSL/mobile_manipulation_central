@@ -34,14 +34,27 @@ git clone https://github.com/utiasDSL/dsl__projects__mobile_manipulation_central
 
 Install [Eigen](https://eigen.tuxfamily.org): `sudo apt install libeigen3-dev`
 
-For kinematics, [pinocchio](https://github.com/stack-of-tasks/pinocchio) is
-required. I prefer to build this outside of the catkin workspace. Refer to the
-[upright](https://github.com/utiasDSL/dsl__projects__tray_balance) README.
+For kinematics, [Pinocchio](https://github.com/stack-of-tasks/pinocchio) is
+required. I prefer to build this outside of the catkin workspace.  First,
+install the dependencies
+```
+sudo apt install ros-noetic-eigenpy ros-noetic-hpp-fcl
+```
+Then follow the installation directions
+[here](https://stack-of-tasks.github.io/pinocchio/download.html) (under the
+"Build from Source" tab), using the cmake command:
+```
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DPYTHON_EXECUTABLE=/usr/bin/python3 -DBUILD_WITH_COLLISION_SUPPORT=ON
+```
+Ensure that you also modify `$PYTHONPATH` to include the location of
+Pinocchio's Python bindings.
 
 Install Python dependencies:
 ```
 python3 -m pip install -r requirements.txt
 ```
+
+### Real Hardware Setup
 
 For working with real hardware, install the following packages into the catkin
 workspace:
@@ -84,6 +97,21 @@ blank. Once done, you should be able to ping the robot at `192.168.131.1`.
 
 ## Usage
 
+### Simulation
+
+This repo provides a basic simulation environment based on
+[PyBullet](https://pybullet.org), a demo of which can be found in
+`scripts/simulation/pyb_simulation.py`.
+
+### Kinematics
+
+Kinematics based on [Pinocchio](https://github.com/stack-of-tasks/pinocchio) is
+provided in both C++ and Python. An example of the kinematics in C++ can be
+found in `src/kinematics_example.cpp`
+
+
+### Real Hardware
+
 Some scripts expect the environment variable
 `MOBILE_MANIPULATION_CENTRAL_BAG_DIR` to point to the directory where bags are
 stored (to create or read bag files). Export this variable in your `.bashrc`.
@@ -111,7 +139,7 @@ and the velocity command topics
 For Python nodes this is abstracted away using the interfaces in
 `src/mobile_manipulation_central/ros_interface.py`.
 
-### Scripts
+#### Scripts
 
 There are some convenient scripts in the `scripts` directory:
 
@@ -120,7 +148,7 @@ There are some convenient scripts in the `scripts` directory:
 * `control/gripper.py` opens and closes the gripper.
 * `control/sine_trajectory` tracks a sinusoidal trajectory with a single joint.
 
-### Tests
+## Tests
 
 Unit tests can be found in the `test` directory. Currently there are only
 Python unit tests, which can be run using [pytest](https://pytest.org/).
