@@ -36,6 +36,10 @@ def main():
         v = k * (rd - r)
         J = robot.jacobian()[:3, :]  # only take position Jacobian
         u = J.T @ np.linalg.solve(J @ J.T, v)
+
+        # note that in simulation the mobile base takes commands in the world
+        # frame, but the real mobile base takes commands in the body frame
+        # (this is just an easy 2D rotation away)
         robot.command_velocity(u)
 
         # step the sim forward in time
