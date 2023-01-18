@@ -24,7 +24,7 @@ UR10 is running firmware version 3.15.
 Manuals and datasheets, as well as other documents, can be found in the `docs`
 directory.
 
-## Installation and setup
+## Installation and Setup
 
 Clone this repository into the catkin workspace:
 ```
@@ -49,7 +49,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DPYTHON_E
 Ensure that you also modify `$PYTHONPATH` to include the location of
 Pinocchio's Python bindings.
 
-Install Python dependencies:
+Finally, install Python dependencies:
 ```
 python3 -m pip install -r requirements.txt
 ```
