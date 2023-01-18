@@ -34,6 +34,14 @@ class BulletSimulation:
         pyb.setAdditionalSearchPath(pybullet_data.getDataPath())
         pyb.loadURDF("plane.urdf", [0, 0, 0])
 
+    def step(self, t):
+        """Step the simulation forward in time by one timestep.
+
+        Returns the new time.
+        """
+        pyb.stepSimulation()
+        return t + self.timestep
+
     def settle(self, duration):
         """Run simulation while doing nothing.
 
@@ -45,7 +53,7 @@ class BulletSimulation:
             t += self.timestep
 
 
-class SimulatedRobot:
+class BulletSimulatedRobot:
     def __init__(
         self,
         urdf_path,
@@ -82,12 +90,18 @@ class SimulatedRobot:
             self.links[link_name] = info
 
         # get the indices for the actuated joints
-        if actuated_joints is None:
-            actuated_joints = self.joints.keys()
+        # if actuated joints are not named, we take all of the non-fixed joints
         self.robot_joint_indices = []
-        for name in actuated_joints:
-            idx = self.joints[name][0]
-            self.robot_joint_indices.append(idx)
+        if actuated_joints is None:
+            for joint in self.joints.values():
+                # joint type == 4 means a fixed joint, skip these
+                if joint[2] == 4:
+                    continue
+                self.robot_joint_indices.append(joint[0])
+        else:
+            for name in actuated_joints:
+                idx = self.joints[name][0]
+                self.robot_joint_indices.append(idx)
 
         # set any locked joints to appropriate values
         self.locked_joints = {}

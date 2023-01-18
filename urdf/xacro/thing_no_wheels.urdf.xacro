@@ -9,7 +9,7 @@ rather the planar twist), we don't want the wheels registered as actuated
 joints.
 -->
 
-<robot name="Thing" xmlns:xacro="http://wiki.ros.org/xacro">
+<robot name="thing_no_wheels" xmlns:xacro="http://wiki.ros.org/xacro">
   <material name="dark_grey">
     <color rgba="0.2 0.2 0.2 1.0"/>
   </material>

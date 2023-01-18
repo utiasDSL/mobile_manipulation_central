@@ -30,6 +30,7 @@ from mobile_manipulation_central.trajectory_generation import (
     PointToPointTrajectory,
     QuinticTimeScaling,
 )
+from mobile_manipulation_central import ros_utils, simulation
 
 BAG_DIR = os.environ["MOBILE_MANIPULATION_CENTRAL_BAG_DIR"]
 
@@ -43,7 +44,7 @@ def bound_array(a, lb=None, ub=None):
     return a
 
 
-def load_home_position(name):
+def load_home_position(name="default"):
     """Load robot home position from config file."""
     rospack = rospkg.RosPack()
     path = (
