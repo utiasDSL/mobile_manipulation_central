@@ -1,7 +1,7 @@
 # Mobile Manipulator Shared Code
 
 This repository contains shared code for running experiments with the "Thing"
-mobile manipulator.
+mobile manipulator. It should work on Ubuntu 18.04, but 20.04 is preferred.
 
 ## System Information
 
@@ -25,6 +25,8 @@ Manuals and datasheets, as well as other documents, can be found in the `docs`
 directory.
 
 ## Installation and Setup
+
+Ensure ROS is installed.
 
 Clone this repository into the catkin workspace:
 ```
@@ -96,6 +98,13 @@ address of `192.168.131.100` with netmask `255.255.255.0`. Leave the gateway
 blank. Once done, you should be able to ping the robot at `192.168.131.1`.
 
 ## Usage
+
+URDF files of the robots are used for kinematics and simulation. Compile the
+xacro files to produce the URDFs:
+```
+cd mobile_manipulation_central/urdf
+./compile_xacro.sh
+```
 
 ### Simulation
 
