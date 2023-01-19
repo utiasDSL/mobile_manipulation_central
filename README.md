@@ -28,13 +28,18 @@ directory.
 
 Ensure ROS is installed.
 
+Install [Eigen](https://eigen.tuxfamily.org): `sudo apt install libeigen3-dev`
+
 Clone this repository into the catkin workspace:
 ```
 cd catkin_ws/src
 git clone https://github.com/utiasDSL/mobile_manipulation_central mobile_manipulation_central
 ```
 
-Install [Eigen](https://eigen.tuxfamily.org): `sudo apt install libeigen3-dev`
+Clone the description of the UR10 robot arm into the catkin workspace:
+```
+git clone -b melodic-devel https://github.com/ros-industrial/universal_robot.git universal_robot
+```
 
 For kinematics, [Pinocchio](https://github.com/stack-of-tasks/pinocchio) is
 required. I prefer to build this outside of the catkin workspace.  First,
