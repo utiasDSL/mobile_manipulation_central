@@ -38,7 +38,7 @@ joints.
 
   <!-- Load the base and tool transforms -->
   <xacro:property name="transform_params_file" value="$(arg transform_params)" />
-  <xacro:property name="config_transform_parameters" value="${load_yaml(transform_params_file)}"/>
+  <xacro:property name="config_transform_parameters" value="${xacro.load_yaml(transform_params_file)}"/>
 
   <!-- Macro to use a transform from `config_transform_parameters` as the origin. -->
   <xacro:macro name="transformed_origin" params="name">
