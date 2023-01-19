@@ -31,7 +31,7 @@ Ensure ROS is installed.
 Clone this repository into the catkin workspace:
 ```
 cd catkin_ws/src
-git clone https://github.com/utiasDSL/dsl__projects__mobile_manipulation_central mobile_manipulation_central
+git clone https://github.com/utiasDSL/mobile_manipulation_central mobile_manipulation_central
 ```
 
 Install [Eigen](https://eigen.tuxfamily.org): `sudo apt install libeigen3-dev`
