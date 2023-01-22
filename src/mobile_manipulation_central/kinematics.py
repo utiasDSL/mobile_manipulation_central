@@ -14,8 +14,9 @@ class RobotKinematics:
         self.nv = model.nv
         self.data = self.model.createData()
 
+        self.tool_link_name = tool_link_name
         if tool_link_name is not None:
-            self.tool_idx = self.model.getBodyId(tool_link_name)
+            self.tool_idx = self.get_link_index(tool_link_name)
         else:
             self.tool_idx = None
 
@@ -34,6 +35,10 @@ class RobotKinematics:
         with open(urdf_file_path) as f:
             urdf_str = f.read()
         return cls.from_urdf_string(urdf_str, root_joint, tool_link_name)
+
+    def get_link_index(self, link_name):
+        """Get index of a link by name."""
+        return self.model.getBodyId(link_name)
 
     def forward(self, q, v=None, a=None):
         """Forward kinematics using (q, v, a) all in the world frame (i.e.,
