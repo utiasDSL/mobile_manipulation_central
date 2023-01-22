@@ -205,6 +205,18 @@ files (for acceleration), the joint limits are:
   rosrun controller_manager controller_manager stop <controller_name>
   ```
 
+### Check Ridgeback battery voltage
+When connected to the Ridgeback, do:
+```
+ssh administrator@192.168.131.1 (password: clearpath)
+rostopic echo /diagnostics
+```
+There will be a lot of output, but search for "Battery Voltage" and you will
+find it. Battery voltage should be between 22V (very low charge) and 27.6V
+(recently charged) (see
+[here](https://clearpathrobotics.com/blog/2021/12/battery-usage-and-maintenance-tips-for-clearpath-robots/)).
+If the voltage is approaching 22V, stop experiments and plug in the robot.
+
 ## Todo
 * Basic PyBullet simulation support (that can be easily extended to suit one's
   own project)
