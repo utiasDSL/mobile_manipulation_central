@@ -12,17 +12,42 @@ class PointToPointTrajectory:
         self.t0 = t0
 
     @classmethod
-    def quintic(cls, start, end, max_vel, max_acc, t0=None):
+    def quintic(cls, start, end, max_vel, max_acc, t0=None, min_duration=None):
         """Build the trajectory with a quintic timescaling with duration
-        suitable to satisfy velocity and acceleration constraints."""
+        suitable to satisfy velocity and acceleration constraints.
+
+        Parameters:
+            start: the start position of the trajectory
+            end: the end position of the trajectory
+            max_vel: maximum allowable velocity
+            max_acc: maximum allowable acceleration
+            t0: (Optional) start time of the trajectory. If not provided, this
+                will be set when the trajectory is first sampled.
+            min_duration: (Optional) minimum duration of the trajectory. If the
+                timescaling obeying the maximum velocity and acceleration
+                limits has a lower duration, we replace the timescaling with
+                one of `min_duration`.
+        """
         distance = np.linalg.norm(end - start)
         timescaling = QuinticTimeScaling.from_max_vel_acc(distance, max_vel, max_acc)
+        if min_duration is not None and timescaling.duration < min_duration:
+            timescaling = QuinticTimeScaling(min_duration)
         return cls(start, end, timescaling, t0)
 
     @property
     def duration(self):
         """The duration of the trajectory."""
         return self.timescaling.duration
+
+    @property
+    def max_velocity(self):
+        # TODO
+        pass
+
+    @property
+    def max_acceleration(self):
+        # TODO
+        pass
 
     def done(self, t):
         """True if the trajectory is done, False otherwise."""

@@ -16,6 +16,7 @@ import mobile_manipulation_central as mm
 
 MAX_JOINT_VELOCITY = 0.2
 MAX_JOINT_ACCELERATION = 1.0
+MIN_DURATION = 1.0  # seconds
 P_GAIN = 1
 CONVERGENCE_TOL = 1e-2
 RATE = 125  # Hz
@@ -62,7 +63,7 @@ def main():
 
     # build the trajectory
     trajectory = mm.PointToPointTrajectory.quintic(
-        q0, home, MAX_JOINT_VELOCITY, MAX_JOINT_ACCELERATION
+        q0, home, MAX_JOINT_VELOCITY, MAX_JOINT_ACCELERATION, min_duration=MIN_DURATION
     )
 
     # use P control + feedforward velocity to track the trajectory
