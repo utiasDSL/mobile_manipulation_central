@@ -1,15 +1,14 @@
 #pragma once
 
+#include <geometry_msgs/TransformStamped.h>
+#include <mobile_manipulation_central/kalman_filter.h>
 #include <ros/console.h>
 #include <ros/ros.h>
-#include <Eigen/Eigen>
-
-#include <geometry_msgs/TransformStamped.h>
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/Empty.h>
 #include <tf/transform_datatypes.h>
 
-#include <mobile_manipulation_central/kalman_filter.h>
+#include <Eigen/Eigen>
 
 namespace mm {
 
@@ -29,15 +28,21 @@ class ProjectileViconEstimator {
         meas_var_ = meas_var;
         gravity_ = gravity;
 
-        std::string vicon_topic;
-        nh.param<std::string>("vicon_topic", vicon_topic,
-                              "/vicon/ThingProjectile/ThingProjectile");
-        nh.param<double>("activation_height", activation_height_, 1.0);
-        nh.param<double>("deactivation_height", deactivation_height_, 0.2);
+        // TODO I don't like that these parameter calls are spread over many
+        // different classes
+        std::string vicon_object_name;
+        nh.param<std::string>("/projectile/vicon_object_name",
+                              vicon_object_name, "ThingProjectile");
+        nh.param<double>("/projectile/activation_height", activation_height_,
+                         1.0);
+        nh.param<double>("/projectile/deactivation_height",
+                         deactivation_height_, 0.2);
 
         // 14.156 corresponds to 3-sigma bound for 3-dim Gaussian variable
-        nh.param<double>("nis_bound_", nis_bound_, 14.156);
+        nh.param<double>("/projectile/nis_bound", nis_bound_, 14.156);
 
+        const std::string vicon_topic =
+            "/vicon/" + vicon_object_name + "/" + vicon_object_name;
         vicon_sub_ = nh.subscribe(vicon_topic, 1,
                                   &ProjectileViconEstimator::vicon_cb, this);
 
@@ -123,7 +128,8 @@ class ProjectileViconEstimator {
             // Predict new state
             // We know that the ball cannot penetrate the floor, so we don't
             // let it
-            kf::GaussianEstimate prediction = kf::predict(estimate_, A, Q, B * u);
+            kf::GaussianEstimate prediction =
+                kf::predict(estimate_, A, Q, B * u);
             if (prediction.x(2) <= 0) {
                 prediction.x(2) = 0;
             }
