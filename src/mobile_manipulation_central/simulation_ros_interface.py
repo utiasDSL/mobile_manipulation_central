@@ -19,9 +19,9 @@ class SimulatedViconObjectInterface:
     def __init__(self, name):
         topic = "/vicon/" + name + "/" + name
         self.pub = rospy.Publisher(topic, TransformStamped, queue_size=1)
-
-        self.ground_truth_pub = rospy.Publisher(name + "/true_joint_states", JointState, queue_size=1)
-
+        self.ground_truth_pub = rospy.Publisher(
+            "/projectile/true_joint_states", JointState, queue_size=1
+        )
 
     def publish_pose(self, t, r, Q):
         """Publish the object's pose at time t, consisting of position r and

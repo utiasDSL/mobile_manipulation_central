@@ -23,34 +23,14 @@ class ProjectileViconEstimator {
     ProjectileViconEstimator() {}
 
     bool init(ros::NodeHandle& nh, double proc_var, double meas_var,
-              const Eigen::Vector3d& gravity) {
+              double nis_bound, double activation_height,
+              double deactivation_height, const Eigen::Vector3d& gravity) {
         proc_var_ = proc_var;
         meas_var_ = meas_var;
+        nis_bound_ = nis_bound;
+        activation_height_ = activation_height;
+        deactivation_height_ = deactivation_height;
         gravity_ = gravity;
-
-        // TODO I don't like that these parameter calls are spread over many
-        // different classes
-        std::string vicon_object_name;
-        nh.param<std::string>("/projectile/vicon_object_name",
-                              vicon_object_name, "ThingProjectile");
-        nh.param<double>("/projectile/activation_height", activation_height_,
-                         1.0);
-        nh.param<double>("/projectile/deactivation_height",
-                         deactivation_height_, 0.2);
-
-        // 14.156 corresponds to 3-sigma bound for 3-dim Gaussian variable
-        nh.param<double>("/projectile/nis_bound", nis_bound_, 14.156);
-
-        const std::string vicon_topic =
-            "/vicon/" + vicon_object_name + "/" + vicon_object_name;
-        vicon_sub_ = nh.subscribe(vicon_topic, 1,
-                                  &ProjectileViconEstimator::vicon_cb, this);
-
-        // This is a topic rather than a service, because we want to use this
-        // from simulation while use_sim_time=True
-        reset_sub_ = nh.subscribe("reset_projectile_estimate", 1,
-                                  &ProjectileViconEstimator::reset_cb, this);
-
         return true;
     }
 
@@ -66,43 +46,34 @@ class ProjectileViconEstimator {
     // Get most recent velocity
     Eigen::Vector3d v() const { return estimate_.x.tail(3); }
 
-   private:
-    /* FUNCTIONS */
-
-    void reset_cb(const std_msgs::Empty&) {
-        ROS_INFO("Projectile estimate reset.");
+    // Reset the estimator (estimate goes back to initial conditions)
+    void reset() {
         msg_count_ = 0;
         active_ = false;
     }
 
-    void vicon_cb(const geometry_msgs::TransformStamped& msg) {
-        // Get the current joint configuration
-        double t = msg.header.stamp.toSec();
-        Eigen::Vector3d q_meas;
-        q_meas << msg.transform.translation.x, msg.transform.translation.y,
-            msg.transform.translation.z;
-
+    // Update the estimator at time t with measurement y of the projectile's
+    // position.
+    void update(const double t, const Eigen::Vector3d& y) {
         // We assume the projectile is in flight (i.e. subject to gravitational
         // acceleration) if it is above a certain height and has not yet
         // reached a certain minimum height. Otherwise, we assume acceleration
         // is zero.
         // TODO probably better to use the estimate for this
-        if (active_ && q_meas(2) <= deactivation_height_) {
+        if (active_ && y(2) <= deactivation_height_) {
             active_ = false;
         }
-        if (!active_ && q_meas(2) >= activation_height_) {
+        if (!active_ && y(2) >= activation_height_) {
             active_ = true;
         }
 
         if (msg_count_ == 0) {
             // Initialize the estimate
             estimate_.x = Eigen::VectorXd::Zero(6);
-            estimate_.x.head(3) = q_meas;
+            estimate_.x.head(3) = y;
             estimate_.P = Eigen::MatrixXd::Identity(6, 6);  // TODO P0
         } else if (msg_count_ >= 1) {
             double dt = t - t_prev_;
-
-            Eigen::VectorXd y = q_meas;
 
             // Compute system matrices
             Eigen::Matrix3d I = Eigen::Matrix3d::Identity();
@@ -137,7 +108,7 @@ class ProjectileViconEstimator {
             // Update the estimate if measurement falls within likely range
             const double nis = kf::nis(prediction, C, R, y);
             if (nis >= nis_bound_) {
-                ROS_WARN_STREAM("Rejected q_meas = " << q_meas.transpose());
+                ROS_WARN_STREAM("Rejected position = " << y.transpose());
                 estimate_ = prediction;
                 return;
             } else {
@@ -149,12 +120,7 @@ class ProjectileViconEstimator {
         ++msg_count_;
     }
 
-    /* VARIABLES */
-
-    // Subscriber to Vicon pose.
-    ros::Subscriber vicon_sub_;
-    ros::Subscriber reset_sub_;
-
+   private:
     // Store last received time and configuration for numerical differentiation
     double t_prev_;
 
@@ -190,13 +156,43 @@ class ProjectileViconEstimatorNode {
    public:
     ProjectileViconEstimatorNode() {}
 
-    void init(ros::NodeHandle& nh, const std::string& name, double proc_var,
-              double meas_var) {
+    void init(ros::NodeHandle& nh) {
         Eigen::Vector3d gravity(0, 0, -9.81);
-        estimator_.init(nh, proc_var, meas_var, gravity);
 
-        joint_states_pub_ =
-            nh.advertise<sensor_msgs::JointState>(name + "/joint_states", 1);
+        // Load parameters
+        std::string vicon_object_name;
+        double proc_var, meas_var, nis_bound, activation_height, deactivation_height;
+        nh.param<std::string>("/projectile/vicon_object_name",
+                              vicon_object_name, "ThingProjectile");
+        nh.param<double>("/projectile/proc_var", proc_var, 1.0);
+        nh.param<double>("/projectile/meas_var", meas_var, 1e-4);
+        nh.param<double>("/projectile/activation_height", activation_height,
+                         1.0);
+        nh.param<double>("/projectile/deactivation_height", deactivation_height,
+                         0.2);
+
+        ROS_INFO_STREAM("projectile proc var = " << proc_var);
+        ROS_INFO_STREAM("projectile meas var = " << meas_var);
+
+        // 14.156 corresponds to 3-sigma bound for 3-dim Gaussian variable
+        nh.param<double>("/projectile/nis_bound", nis_bound, 14.156);
+
+        const std::string vicon_topic =
+            "/vicon/" + vicon_object_name + "/" + vicon_object_name;
+        vicon_sub_ = nh.subscribe(
+            vicon_topic, 1, &ProjectileViconEstimatorNode::vicon_cb, this);
+
+        // This is a topic rather than a service, because we want to use this
+        // from simulation while use_sim_time=True
+        reset_sub_ =
+            nh.subscribe("/projectile/reset_estimate", 1,
+                         &ProjectileViconEstimatorNode::reset_cb, this);
+
+        joint_states_pub_ = nh.advertise<sensor_msgs::JointState>(
+            "/projectile/joint_states", 1);
+
+        estimator_.init(nh, proc_var, meas_var, nis_bound, activation_height,
+                        deactivation_height, gravity);
     }
 
     // Spin, publishing the most recent estimate at the specified rate.
@@ -215,6 +211,21 @@ class ProjectileViconEstimatorNode {
     }
 
    private:
+    void reset_cb(const std_msgs::Empty&) {
+        estimator_.reset();
+        ROS_INFO("Projectile estimate reset.");
+    }
+
+    void vicon_cb(const geometry_msgs::TransformStamped& msg) {
+        // Get the current joint configuration
+        double t = msg.header.stamp.toSec();
+        Eigen::Vector3d y;
+        y << msg.transform.translation.x, msg.transform.translation.y,
+            msg.transform.translation.z;
+
+        estimator_.update(t, y);
+    }
+
     void publish_joint_states(const Eigen::Vector3d& q,
                               const Eigen::Vector3d& v) {
         sensor_msgs::JointState msg;
@@ -229,9 +240,14 @@ class ProjectileViconEstimatorNode {
         joint_states_pub_.publish(msg);
     }
 
+    // Subscribers to Vicon pose and reset hook.
+    ros::Subscriber vicon_sub_;
+    ros::Subscriber reset_sub_;
+
     // Publisher for position and velocity.
     ros::Publisher joint_states_pub_;
 
+    // Underlying estimator
     ProjectileViconEstimator estimator_;
 };
 
@@ -239,9 +255,11 @@ class ProjectileROSInterface {
    public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    ProjectileROSInterface(ros::NodeHandle& nh, const std::string& name) {
+    ProjectileROSInterface() {}
+
+    void init(ros::NodeHandle& nh) {
         joint_state_sub_ =
-            nh.subscribe(name + "/joint_states", 1,
+            nh.subscribe("/projectile/joint_states", 1,
                          &ProjectileROSInterface::joint_state_cb, this);
     }
 
