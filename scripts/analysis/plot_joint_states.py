@@ -21,6 +21,7 @@ def main():
     ur10_cmd_ts = np.array([t.to_sec() for _, _, t in bag.read_messages("/ur10/cmd_vel")])
     ur10_cmd_ts -= ur10_cmd_ts[0]
 
+    # TODO trim messages to only start once we get a command
     ur10_cmd_vels = []
     for msg in ur10_cmd_msgs:
         ur10_cmd_vels.append(msg.data)

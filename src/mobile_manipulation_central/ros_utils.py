@@ -220,6 +220,8 @@ def interpolate_list(new_times, old_times, values, method="lerp"):
     n2 = len(old_times)
     for idx1 in range(n1):
         t = new_times[idx1]
+        if idx1 > 0:
+            assert t >= new_times[idx1 - 1], "Time moved backward!"
 
         # time is before the values start: pad with the first value
         if t <= old_times[0]:
