@@ -7,6 +7,7 @@ position is identified by passing a name as the first argument, corresponding
 to an entry in config/home.yaml.
 """
 import argparse
+import signal
 
 import rospy
 import numpy as np
@@ -20,6 +21,19 @@ MIN_DURATION = 1.0  # seconds
 P_GAIN = 1
 CONVERGENCE_TOL = 1e-2
 RATE = 125  # Hz
+
+
+class SignalHandler:
+    """Custom signal handler to brake the robot before shutting down ROS."""
+    def __init__(self, robot):
+        self.robot = robot
+        signal.signal(signal.SIGINT, self.handler)
+
+    def handler(self, signum, frame):
+        print("Received SIGINT.")
+        print("Braking robot.")
+        self.robot.brake()
+        rospy.signal_shutdown("Caught SIGINT!")
 
 
 def main():
@@ -40,7 +54,7 @@ def main():
     grp.add_argument("--base-only", help="Only home the base", action="store_true")
     args = parser.parse_args()
 
-    rospy.init_node("home")
+    rospy.init_node("home", disable_signals=True)
 
     home = mm.load_home_position(args.name)
 
@@ -53,6 +67,8 @@ def main():
         home = home[: robot.nq]
     else:
         robot = mm.MobileManipulatorROSInterface()
+
+    signal_handler = SignalHandler(robot)
 
     rate = rospy.Rate(RATE)
 
