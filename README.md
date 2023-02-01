@@ -217,6 +217,11 @@ find it. Battery voltage should be between 22V (very low charge) and 27.6V
 [here](https://clearpathrobotics.com/blog/2021/12/battery-usage-and-maintenance-tips-for-clearpath-robots/)).
 If the voltage is approaching 22V, stop experiments and plug in the robot.
 
+### Ridgeback Packages
+* High-level functions: [ridgeback](https://github.com/ridgeback/ridgeback)
+* Low-level functions: [ridgeback_robot](https://github.com/ridgeback/ridgeback_robot)
+* Motor driver: [puma_motor_driver](https://github.com/clearpathrobotics/puma_motor_driver)
+
 ## Todo
 * Basic PyBullet simulation support (that can be easily extended to suit one's
   own project)
