@@ -1,6 +1,7 @@
 import numpy as np
 import rospy
 
+from spatialmath.base import rotz
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float64MultiArray
 from sensor_msgs.msg import JointState
@@ -73,9 +74,18 @@ class RidgebackROSInterface(RobotROSInterface):
 
         self.joint_states_received = True
 
-    def publish_cmd_vel(self, cmd_vel):
-        """Command the velocity of the robot's joints."""
+    def publish_cmd_vel(self, cmd_vel, bodyframe=False):
+        """Command the velocity of the robot's joints.
+
+        Setting bodyframe to True indicated that the command is in the base's
+        body frame; False indicates it is in the world frame.
+        """
         assert cmd_vel.shape == (self.nv,)
+
+        # rotate into body frame from world frame if needed
+        if not bodyframe:
+            C_bw = rotz(-self.q[2])
+            cmd_vel = C_bw @ cmd_vel
 
         msg = Twist()
         msg.linear.x = cmd_vel[0]
@@ -100,8 +110,12 @@ class UR10ROSInterface(RobotROSInterface):
         _, self.q, self.v = ros_utils.parse_ur10_joint_state_msg(msg)
         self.joint_states_received = True
 
-    def publish_cmd_vel(self, cmd_vel):
-        """Command the velocity of the robot's joints."""
+    def publish_cmd_vel(self, cmd_vel, bodyframe=None):
+        """Command the velocity of the robot's joints.
+
+        The bodyframe option changes nothing, but is provided for compatibility
+        with the Ridgeback interface.
+        """
         assert cmd_vel.shape == (self.nv,)
 
         msg = Float64MultiArray()
@@ -128,11 +142,15 @@ class MobileManipulatorROSInterface:
         """True if joint state messages have been received for both arm and base."""
         return self.base.ready() and self.arm.ready()
 
-    def publish_cmd_vel(self, cmd_vel):
-        """Command the velocity of the robot's joints."""
+    def publish_cmd_vel(self, cmd_vel, bodyframe=False):
+        """Command the velocity of the robot's joints.
+
+        Setting bodyframe to True indicated that the command is in the base's
+        body frame; False indicates it is in the world frame.
+        """
         assert cmd_vel.shape == (self.nv,)
 
-        self.base.publish_cmd_vel(cmd_vel[: self.base.nv])
+        self.base.publish_cmd_vel(cmd_vel[: self.base.nv], bodyframe=bodyframe)
         self.arm.publish_cmd_vel(cmd_vel[self.base.nv :])
 
     @property

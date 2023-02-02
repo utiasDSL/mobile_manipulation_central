@@ -25,14 +25,16 @@ RATE = 125  # Hz
 
 class SignalHandler:
     """Custom signal handler to brake the robot before shutting down ROS."""
-    def __init__(self, robot):
+    def __init__(self, robot, dry_run):
         self.robot = robot
+        self.dry_run = dry_run
         signal.signal(signal.SIGINT, self.handler)
 
     def handler(self, signum, frame):
         print("Received SIGINT.")
         print("Braking robot.")
-        self.robot.brake()
+        if not self.dry_run:
+            self.robot.brake()
         rospy.signal_shutdown("Caught SIGINT!")
 
 
@@ -68,7 +70,8 @@ def main():
     else:
         robot = mm.MobileManipulatorROSInterface()
 
-    signal_handler = SignalHandler(robot)
+    # enable custom signal handler
+    signal_handler = SignalHandler(robot, args.dry_run)
 
     rate = rospy.Rate(RATE)
 
@@ -102,11 +105,12 @@ def main():
         if args.dry_run:
             print(cmd_vel)
         else:
-            robot.publish_cmd_vel(cmd_vel)
+            robot.publish_cmd_vel(cmd_vel, bodyframe=False)
 
         rate.sleep()
 
-    robot.brake()
+    if not args.dry_run:
+        robot.brake()
 
     print(f"Converged to within {dist} of home position.")
 
