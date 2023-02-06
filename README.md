@@ -222,7 +222,17 @@ If the voltage is approaching 22V, stop experiments and plug in the robot.
 * Low-level functions: [ridgeback_robot](https://github.com/ridgeback/ridgeback_robot)
 * Motor driver: [puma_motor_driver](https://github.com/clearpathrobotics/puma_motor_driver)
 
+## Known Issues
+* Occasionally when starting the robot the connection to the UR10 cannot be
+  made. The `ur_robot_driver` node (launched as part of `thing.launch`) will
+  complain with something along the lines of
+  ```
+  could not connect to robot at address 192.168.131.40
+  ```
+  Thus far the only known solution is to restart the UR10 until the problem
+  goes away (i.e. the connection is established properly). There is no need to
+  restart the Ridgeback. It appears that this is a startup issue; the
+  connection is generally very stable once established.
+
 ## Todo
-* Basic PyBullet simulation support (that can be easily extended to suit one's
-  own project)
-* Kalman filter Ridgeback base and UR10 joints (velocities in particular)
+* Add Kalman filter for Ridgeback base and UR10 joints
