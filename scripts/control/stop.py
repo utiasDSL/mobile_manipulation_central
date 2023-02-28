@@ -11,6 +11,7 @@ def main():
     robot = mm.MobileManipulatorROSInterface()
     rate = rospy.Rate(RATE)
 
+    print("Publishing zero velocity commands until Ctrl-C is pressed...")
     while not rospy.is_shutdown():
         robot.brake()
         rate.sleep()
