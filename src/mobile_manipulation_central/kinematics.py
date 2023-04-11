@@ -68,19 +68,23 @@ class RobotKinematics:
 
         pinocchio.computeForwardKinematicsDerivatives(self.model, self.data, q, v, a)
 
-    def link_pose(self, link_idx=None):
+    def link_pose(self, link_idx=None, rotation_matrix=False):
         """Get pose of link at index link_idx.
 
         Must call forward(q, ...) first.
 
-        Returns a tuple (position, quaternion).
+        Returns a tuple (position, orientation). If `rotation_matrix` is True,
+        then the orientation is a 3x3 matrix, otherwise it is a quaternion with
+        the scalar part as the last element.
         """
         if link_idx is None:
             link_idx = self.tool_idx
         pose = self.data.oMf[link_idx]
-        r = pose.translation
-        Q = r2q(pose.rotation, order="xyzs")
-        return r.copy(), Q.copy()
+        pos = pose.translation.copy()
+        orn = pose.rotation.copy()
+        if not rotation_matrix:
+            orn = r2q(orn, order="xyzs")
+        return pos, orn
 
     def link_velocity(self, link_idx=None):
         """Get velocity of link at index link_idx"""
@@ -95,6 +99,7 @@ class RobotKinematics:
         return V.linear, V.angular
 
     def link_classical_acceleration(self, link_idx=None):
+        """Get the classical acceleration of a link."""
         if link_idx is None:
             link_idx = self.tool_idx
         A = pinocchio.getFrameClassicalAcceleration(
@@ -106,6 +111,7 @@ class RobotKinematics:
         return A.linear, A.angular
 
     def link_spatial_acceleration(self, link_idx=None):
+        """Get the spatial acceleration of a link."""
         if link_idx is None:
             link_idx = self.tool_idx
         A = pinocchio.getFrameAcceleration(
@@ -116,18 +122,30 @@ class RobotKinematics:
         )
         return A.linear, A.angular
 
-    def jacobian(self, q):
+    def jacobian(self, q, link_idx=None):
         """Compute the robot geometric Jacobian."""
+        if link_idx is None:
+            link_idx = self.tool_idx
         return pinocchio.computeFrameJacobian(
             self.model,
             self.data,
             q,
-            self.tool_idx,
+            link_idx,
             pinocchio.ReferenceFrame.LOCAL_WORLD_ALIGNED,
         )
 
-    def link_velocity_derivatives(self, link_idx):
+    def jacobian_time_derivative(self, q, v, link_idx=None):
+        """Compute the time derivative of the geometric Jacobian dJ/dt for a given frame."""
+        raise NotImplementedError(
+            "Jacobian time derivative is not implemented because it is not "
+            "needed for acceleration-level control. See "
+            "<https://github.com/stack-of-tasks/pinocchio/issues/1395>."
+        )
+
+    def link_velocity_derivatives(self, link_idx=None):
         """Compute derivative of link velocity with respect to q and v."""
+        if link_idx is None:
+            link_idx = self.tool_idx
         dVdq, dVdv = pinocchio.getFrameVelocityDerivatives(
             self.model,
             self.data,
@@ -138,6 +156,8 @@ class RobotKinematics:
 
     def link_classical_acceleration_derivatives(self, link_idx=None):
         """Compute derivative of link classical acceleration with respect to q, v, a."""
+        if link_idx is None:
+            link_idx = self.tool_idx
         dr, ω = self.link_velocity(link_idx=link_idx)
         dVdq, dVdv = self.link_velocity_derivatives(link_idx=link_idx)
         dAdq, dAdv, dAda = self.link_spatial_acceleration_derivatives(link_idx=link_idx)
