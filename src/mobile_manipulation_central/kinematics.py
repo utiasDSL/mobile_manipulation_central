@@ -7,6 +7,17 @@ from spatialmath.base import r2q
 from mobile_manipulation_central.ros_utils import compile_xacro
 
 
+def _ref_frame_from_string(s):
+    s = s.lower()
+    if s == "local":
+        return pinocchio.ReferenceFrame.LOCAL
+    if s == "local_world_aligned":
+        return pinocchio.ReferenceFrame.LOCAL_WORLD_ALIGNED
+    if s == "world":
+        return pinocchio.ReferenceFrame.WORLD
+    raise ValueError(f"{s} is not a valid Pinocchio reference frame.")
+
+
 class RobotKinematics:
     def __init__(self, model, tool_link_name=None):
         self.model = model
@@ -86,7 +97,7 @@ class RobotKinematics:
             orn = r2q(orn, order="xyzs")
         return pos, orn
 
-    def link_velocity(self, link_idx=None):
+    def link_velocity(self, link_idx=None, frame="local_world_aligned"):
         """Get velocity of link at index link_idx"""
         if link_idx is None:
             link_idx = self.tool_idx
@@ -94,11 +105,11 @@ class RobotKinematics:
             self.model,
             self.data,
             link_idx,
-            pinocchio.ReferenceFrame.LOCAL_WORLD_ALIGNED,
+            _ref_frame_from_string(frame),
         )
         return V.linear, V.angular
 
-    def link_classical_acceleration(self, link_idx=None):
+    def link_classical_acceleration(self, link_idx=None, frame="local_world_aligned"):
         """Get the classical acceleration of a link."""
         if link_idx is None:
             link_idx = self.tool_idx
@@ -106,11 +117,11 @@ class RobotKinematics:
             self.model,
             self.data,
             link_idx,
-            pinocchio.ReferenceFrame.LOCAL_WORLD_ALIGNED,
+            _ref_frame_from_string(frame),
         )
         return A.linear, A.angular
 
-    def link_spatial_acceleration(self, link_idx=None):
+    def link_spatial_acceleration(self, link_idx=None, frame="local_world_aligned"):
         """Get the spatial acceleration of a link."""
         if link_idx is None:
             link_idx = self.tool_idx
@@ -118,11 +129,11 @@ class RobotKinematics:
             self.model,
             self.data,
             link_idx,
-            pinocchio.ReferenceFrame.LOCAL_WORLD_ALIGNED,
+            _ref_frame_from_string(frame),
         )
         return A.linear, A.angular
 
-    def jacobian(self, q, link_idx=None):
+    def jacobian(self, q, link_idx=None, frame="local_world_aligned"):
         """Compute the robot geometric Jacobian."""
         if link_idx is None:
             link_idx = self.tool_idx
@@ -131,7 +142,7 @@ class RobotKinematics:
             self.data,
             q,
             link_idx,
-            pinocchio.ReferenceFrame.LOCAL_WORLD_ALIGNED,
+            _ref_frame_from_string(frame),
         )
 
     def jacobian_time_derivative(self, q, v, link_idx=None):
@@ -142,7 +153,7 @@ class RobotKinematics:
             "<https://github.com/stack-of-tasks/pinocchio/issues/1395>."
         )
 
-    def link_velocity_derivatives(self, link_idx=None):
+    def link_velocity_derivatives(self, link_idx=None, frame="local_world_aligned"):
         """Compute derivative of link velocity with respect to q and v."""
         if link_idx is None:
             link_idx = self.tool_idx
@@ -150,17 +161,21 @@ class RobotKinematics:
             self.model,
             self.data,
             link_idx,
-            pinocchio.ReferenceFrame.LOCAL_WORLD_ALIGNED,
+            _ref_frame_from_string(frame),
         )
         return dVdq, dVdv
 
-    def link_classical_acceleration_derivatives(self, link_idx=None):
+    def link_classical_acceleration_derivatives(
+        self, link_idx=None, frame="local_world_aligned"
+    ):
         """Compute derivative of link classical acceleration with respect to q, v, a."""
         if link_idx is None:
             link_idx = self.tool_idx
-        dr, ω = self.link_velocity(link_idx=link_idx)
-        dVdq, dVdv = self.link_velocity_derivatives(link_idx=link_idx)
-        dAdq, dAdv, dAda = self.link_spatial_acceleration_derivatives(link_idx=link_idx)
+        dr, ω = self.link_velocity(link_idx=link_idx, frame=frame)
+        dVdq, dVdv = self.link_velocity_derivatives(link_idx=link_idx, frame=frame)
+        dAdq, dAdv, dAda = self.link_spatial_acceleration_derivatives(
+            link_idx=link_idx, frame=frame
+        )
 
         # derivative of the coriolis term
         ddrdq, dwdq = dVdq[:3, :], dVdq[3:, :]
@@ -175,7 +190,9 @@ class RobotKinematics:
 
         return dAs_dq, dAs_dv, dAs_da
 
-    def link_spatial_acceleration_derivatives(self, link_idx=None):
+    def link_spatial_acceleration_derivatives(
+        self, link_idx=None, frame="local_world_aligned"
+    ):
         """Compute derivative of link spatial acceleration with respect to q, v, a."""
         if link_idx is None:
             link_idx = self.tool_idx
@@ -183,7 +200,7 @@ class RobotKinematics:
             self.model,
             self.data,
             link_idx,
-            pinocchio.ReferenceFrame.LOCAL_WORLD_ALIGNED,
+            _ref_frame_from_string(frame),
         )
         return dAdq, dAdv, dAda
 
