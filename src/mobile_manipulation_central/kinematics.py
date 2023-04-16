@@ -8,6 +8,7 @@ from mobile_manipulation_central.ros_utils import compile_xacro
 
 
 def _ref_frame_from_string(s):
+    """Translate a string to pinocchio's ReferenceFrame enum value."""
     s = s.lower()
     if s == "local":
         return pinocchio.ReferenceFrame.LOCAL
@@ -19,6 +20,7 @@ def _ref_frame_from_string(s):
 
 
 class RobotKinematics:
+    """Class representing the kinematics model ofa  robot."""
     def __init__(self, model, tool_link_name=None):
         self.model = model
         self.nq = model.nq
@@ -49,7 +51,11 @@ class RobotKinematics:
 
     def get_link_index(self, link_name):
         """Get index of a link by name."""
-        return self.model.getBodyId(link_name)
+        # TODO: it would probably be desirable to rename "link" to "frame"
+        # everywhere in this class
+        if not self.model.existFrame(link_name):
+            raise ValueError(f"Model has no frame named {link_name}.")
+        return self.model.getFrameId(link_name)
 
     def forward(self, q, v=None, a=None):
         """Forward kinematics using (q, v, a) all in the world frame (i.e.,
