@@ -173,6 +173,22 @@ def parse_transform_stamped_msgs(msgs, normalize_time=True):
     return ts, poses
 
 
+def parse_wrench_stamped_msg(msg):
+    """Parse time and wrench from a WrenchStamped message."""
+    t = msg_time(msg)
+    f = msg.wrench.force
+    τ = msg.wrench.torque
+    wrench = np.array([f.x, f.y, f.z, τ.x, τ.y, τ.z])
+    return t, wrench
+
+
+def parse_wrench_stamped_msgs(msgs, normalize_time=True):
+    """Parse a list of WrenchStamped messages."""
+    ts = parse_time(msgs, normalize_time=normalize_time)
+    wrenches = np.array([parse_wrench_stamped_msg(msg)[1] for msg in msgs])
+    return ts, wrenches
+
+
 def lerp(x, y, s):
     """Linearly interpolate between values x and y with parameter s in [0, 1]."""
     assert 0 <= s <= 1

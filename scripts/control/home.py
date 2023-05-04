@@ -4,7 +4,10 @@
 The user can choose to send just the base, just the arm, or both to a
 configurable home position by passing --base-only or --arm-only. The home
 position is identified by passing a name as the first argument, corresponding
-to an entry in config/home.yaml.
+to an entry in home config file.
+
+The default config file is located in `config/home.yaml`, but another can be
+passed using the --config argument.
 """
 import argparse
 import signal
@@ -23,21 +26,6 @@ CONVERGENCE_TOL = 1e-2
 RATE = 125  # Hz
 
 
-class SignalHandler:
-    """Custom signal handler to brake the robot before shutting down ROS."""
-    def __init__(self, robot, dry_run):
-        self.robot = robot
-        self.dry_run = dry_run
-        signal.signal(signal.SIGINT, self.handler)
-
-    def handler(self, signum, frame):
-        print("Received SIGINT.")
-        print("Braking robot.")
-        if not self.dry_run:
-            self.robot.brake()
-        rospy.signal_shutdown("Caught SIGINT!")
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -51,6 +39,10 @@ def main():
         help="Don't send any commands, just print out what would be sent.",
         action="store_true",
     )
+    parser.add_argument(
+        "--config",
+        help="Path to YAML file to load the home configurations from.",
+    )
     grp = parser.add_mutually_exclusive_group()
     grp.add_argument("--arm-only", help="Only home the arm", action="store_true")
     grp.add_argument("--base-only", help="Only home the base", action="store_true")
@@ -58,7 +50,7 @@ def main():
 
     rospy.init_node("home", disable_signals=True)
 
-    home = mm.load_home_position(args.name)
+    home = mm.load_home_position(name=args.name, path=args.config)
 
     # select which robot component we're using
     if args.arm_only:
@@ -71,7 +63,7 @@ def main():
         robot = mm.MobileManipulatorROSInterface()
 
     # enable custom signal handler
-    signal_handler = SignalHandler(robot, args.dry_run)
+    signal_handler = mm.RobotSignalHandler(robot, args.dry_run)
 
     rate = rospy.Rate(RATE)
 

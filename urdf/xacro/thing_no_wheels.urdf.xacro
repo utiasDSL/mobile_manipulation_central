@@ -242,6 +242,14 @@ joints.
     <child link="gripper"/>
   </joint>
 
+  <link name="ft_sensor"></link>
+
+  <joint name="tool_ft_sensor_joint" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0.02"/>
+    <parent link="ur10_arm_tool0"/>
+    <child link="ft_sensor"/>
+  </joint>
+
   <!-- If you want to have an object as part of the URDF, include something like: -->
   <!-- <link name="gripped_object" /> -->
   <!-- <joint name="gripped_object_joint" type="fixed"> -->

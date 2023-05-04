@@ -1,5 +1,6 @@
 import numpy as np
 import rospy
+import signal
 
 from spatialmath.base import rotz
 from geometry_msgs.msg import Twist
@@ -165,3 +166,19 @@ class MobileManipulatorROSInterface:
         Note that the base velocity is in the world frame.
         """
         return np.concatenate((self.base.v, self.arm.v))
+
+
+class RobotSignalHandler:
+    """Custom signal handler to brake the robot before shutting down ROS."""
+
+    def __init__(self, robot, dry_run=False):
+        self.robot = robot
+        self.dry_run = dry_run
+        signal.signal(signal.SIGINT, self.handler)
+
+    def handler(self, signum, frame):
+        print("Received SIGINT.")
+        print("Braking robot.")
+        if not self.dry_run:
+            self.robot.brake()
+        rospy.signal_shutdown("Caught SIGINT!")
