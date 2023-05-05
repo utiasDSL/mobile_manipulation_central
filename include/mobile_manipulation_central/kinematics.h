@@ -38,11 +38,11 @@ class RobotKinematics {
 
     Mat3 rotation() const { return data_.oMf[tool_idx_].rotation(); }
 
-    MatX jacobian(const VecX& q) {
+    MatX jacobian(const VecX& q,
+                  const pinocchio::ReferenceFrame rf =
+                      pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED) {
         MatX J = MatX::Zero(6, model_.nq);
-        pinocchio::computeFrameJacobian(
-            model_, data_, q, tool_idx_,
-            pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, J);
+        pinocchio::computeFrameJacobian(model_, data_, q, tool_idx_, rf, J);
         return J;
     }
 
