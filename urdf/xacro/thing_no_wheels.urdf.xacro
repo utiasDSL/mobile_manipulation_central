@@ -250,12 +250,12 @@ joints.
     <child link="ft_sensor"/>
   </joint>
 
-  <!-- If you want to have an object as part of the URDF, include something like: -->
-  <!-- <link name="gripped_object" /> -->
-  <!-- <joint name="gripped_object_joint" type="fixed"> -->
-  <!--   <xacro:transformed_origin name="gripped_object_transform" /> -->
-  <!--   <parent link="gripper"/> -->
-  <!--   <child link="gripped_object"/> -->
-  <!-- </joint> -->
+  <!-- Frame for a gripped object or tool. Its pose is specified in the `transform_params` config file.  -->
+  <link name="gripped_object" />
+  <joint name="gripped_object_joint" type="fixed">
+    <xacro:transformed_origin name="gripped_object_transform" />
+    <parent link="gripper"/>
+    <child link="gripped_object"/>
+  </joint>
 
 </robot>

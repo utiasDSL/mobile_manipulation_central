@@ -4,7 +4,7 @@ import pinocchio
 import rospkg
 from spatialmath.base import r2q
 
-from mobile_manipulation_central.ros_utils import compile_xacro
+from mobile_manipulation_central.ros_utils import compile_xacro, package_file_path
 
 
 def _ref_frame_from_string(s):
@@ -21,6 +21,7 @@ def _ref_frame_from_string(s):
 
 class RobotKinematics:
     """Class representing the kinematics model ofa  robot."""
+
     def __init__(self, model, tool_link_name=None):
         self.model = model
         self.nq = model.nq
@@ -213,14 +214,12 @@ class RobotKinematics:
 
 class MobileManipulatorKinematics(RobotKinematics):
     # TODO support args to the xacro file
-    def __init__(self, filename="thing_no_wheels.urdf.xacro", tool_link_name="gripper"):
-        rospack = rospkg.RosPack()
-        xacro_path = (
-            Path(rospack.get_path("mobile_manipulation_central"))
-            / "urdf/xacro"
-            / filename
-        )
-        urdf_str = compile_xacro(xacro_path)
+    def __init__(self, filepath=None, tool_link_name="gripped_object"):
+        if filepath is None:
+            filepath = package_file_path(
+                "mobile_manipulation_central", "urdf/xacro/thing_no_wheels.urdf.xacro"
+            )
+        urdf_str = compile_xacro(filepath)
 
         # 3-DOF base joint
         root_joint = pinocchio.JointModelComposite(3)
