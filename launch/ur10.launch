@@ -2,8 +2,11 @@
 
 <!-- Launch the UR10. -->
 <launch>
+  <arg name="use_joy_stick_relay" default="false" doc="use joy stick for emergency stop"/>
+
   <!-- this is ultimately remapped to /ur10/cmd_vel -->
-  <remap from="joint_group_vel_controller/command" to="cmd_vel" />
+  <remap from="joint_group_vel_controller/command" to="cmd_vel" unless="$(arg use_joy_stick_relay)"/>
+  <remap from="joint_group_vel_controller/command" to="ur10_velocity_controller/cmd_vel" if="$(arg use_joy_stick_relay)"/>
 
   <!-- Launch UR10 driver. -->
   <!-- namespace is required to avoid conflict with Ridgeback control topics/services -->
