@@ -1,8 +1,11 @@
 """General ROS parsing utilities."""
+from pathlib import Path
+
 import numpy as np
 from spatialmath import UnitQuaternion
 from spatialmath.base import qslerp
 import xacro
+import rospkg
 
 
 UR10_JOINT_NAMES = [
@@ -271,3 +274,21 @@ def compile_xacro(xacro_path):
 
 def vicon_topic_name(name):
     return "/".join(["/vicon", name, name])
+
+
+def package_path(package_name):
+    """Get the path to a ROS package."""
+    rospack = rospkg.RosPack()
+    return Path(rospack.get_path(package_name))
+
+
+def package_file_path(package_name, relative_path):
+    """Get the path to a file within a ROS package.
+
+    Parameters:
+        package_name is the name of the ROS package
+        relative_path is the path of the file relative to the package root
+
+    Returns: Path object representing the file path.
+    """
+    return package_path(package_name) / relative_path
