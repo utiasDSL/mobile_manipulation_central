@@ -1,7 +1,10 @@
 # Mobile Manipulator Shared Code
 
 This repository contains shared code for running experiments with the "Thing"
-mobile manipulator. It should work on Ubuntu 18.04, but 20.04 is preferred.
+mobile manipulator (shown below). It should work on Ubuntu 18.04, but 20.04
+is preferred.
+
+![Mobile manipulator robot](img/robot.jpg)
 
 ## System Information
 
@@ -111,6 +114,13 @@ cd mobile_manipulation_central/urdf
 ./compile_xacro.sh
 ```
 
+One of the main goals of this repo is to facilitate easy development over ROS.
+We provide ROS interfaces for the base, arm, and combined mobile manipulator
+system (`src/mobile_manipulation_central/ros_interface.py`) which provide a
+standard API to communicate with the robot over ROS. Theses interfaces can be
+used seamlessly with real hardware or a simulated version of the robot
+(`src/mobile_manipulation_central/simulation_ros_interface.py`).
+
 ### Simulation
 
 This repo provides a basic simulation environment based on
@@ -122,7 +132,6 @@ This repo provides a basic simulation environment based on
 Kinematics based on [Pinocchio](https://github.com/stack-of-tasks/pinocchio) is
 provided in both C++ and Python. An example of the kinematics in C++ can be
 found in `src/kinematics_example.cpp`
-
 
 ### Real Hardware
 
@@ -208,7 +217,7 @@ files (for acceleration), the joint limits are:
 ### Check Ridgeback battery voltage
 When connected to the Ridgeback, do:
 ```
-ssh administrator@192.168.131.1 (password: clearpath)
+ssh administrator@192.168.131.1  # password required
 rostopic echo /diagnostics
 ```
 There will be a lot of output, but search for "Battery Voltage" and you will
