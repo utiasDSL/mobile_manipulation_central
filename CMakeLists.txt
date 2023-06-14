@@ -32,11 +32,10 @@ catkin_package(
    DEPENDS Eigen3 pinocchio
 )
 
-catkin_install_python(PROGRAMS
-   src/ridgeback_state_publisher_node.py
-   src/joy_stick_relay_node.py
-   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
- )
+# catkin_install_python(PROGRAMS
+#    src/joy_stick_relay_node.py
+#    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#  )
 
 ###########
 ## Build ##

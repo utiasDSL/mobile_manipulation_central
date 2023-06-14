@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import rospy
 from mobile_manipulation_central.joy_stick_relay import MobileManipulatorControlCommandRelayInterface
 
