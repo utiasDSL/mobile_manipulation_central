@@ -4,6 +4,9 @@ from std_msgs.msg import Float64MultiArray
 from sensor_msgs.msg import Joy
 
 
+RELAY_BUTTON_IDX = 13
+
+
 class ControlCommandRelayInterface:
     """Base class for control command topic relay interface"""
 
@@ -57,9 +60,7 @@ class MobileManipulatorControlCommandRelayInterface:
         self.joy_sub = rospy.Subscriber("/bluetooth_teleop/joy", Joy, self._joy_cb)
 
     def _joy_cb(self, msg):
-        # R1 button is the deadman's switch
-        r1_pressed = msg.buttons[5]
-        enable_relay = r1_pressed == 1
+        enable_relay = msg.buttons[RELAY_BUTTON_IDX] == 1
 
         self.arm.enable_relay = enable_relay
         self.base.enable_relay = enable_relay
