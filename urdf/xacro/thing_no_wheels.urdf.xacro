@@ -251,11 +251,12 @@ joints.
   </joint>
 
   <!-- Frame for a gripped object or tool. Its pose is specified in the `transform_params` config file.  -->
-  <link name="gripped_object" />
-  <joint name="gripped_object_joint" type="fixed">
-    <xacro:transformed_origin name="gripped_object_transform" />
-    <parent link="gripper"/>
-    <child link="gripped_object"/>
-  </joint>
+  <!-- Something like this should be added in your own project's URDF and customized to your needs. -->
+  <!-- <link name="gripped_object" /> -->
+  <!-- <joint name="gripped_object_joint" type="fixed"> -->
+  <!--   <xacro:transformed_origin name="gripped_object_transform" /> -->
+  <!--   <parent link="gripper"/> -->
+  <!--   <child link="gripped_object"/> -->
+  <!-- </joint> -->
 
 </robot>
