@@ -121,7 +121,7 @@ def main():
 
     yaml_dict = {
         "base_to_arm_transform": transform_dict(T1_opt),
-        "ee_to_tray_transform": transform_dict(T2_opt),
+        "gripped_object_transform": transform_dict(T2_opt),
     }
 
     print(yaml.dump(yaml_dict))
