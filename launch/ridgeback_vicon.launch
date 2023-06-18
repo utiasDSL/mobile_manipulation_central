@@ -2,10 +2,12 @@
 
 <!-- Track the Ridgeback base using Vicon -->
 <launch>
+  <arg name="use_joy_stick_relay" default="false" doc="use joy stick for emergency stop"/>
+
   <include file="$(find mobile_manipulation_central)/launch/vicon.launch" />
 
   <!-- Republish Vicon /ridgeback/cmd_vel to /ridgeback_velocity_controller/cmd_vel -->
-  <node name="ridgeback_velocity_relay" pkg="topic_tools" type="relay" respawn="true" args="ridgeback/cmd_vel ridgeback_velocity_controller/cmd_vel" output="screen" />
+  <node name="ridgeback_velocity_relay" pkg="topic_tools" type="relay" respawn="true" args="ridgeback/cmd_vel ridgeback_velocity_controller/cmd_vel" output="screen" unless="$(arg use_joy_stick_relay)"/>
 
   <!-- Estimation of Ridgeback joint state from Vicon messages. -->
   <node pkg="mobile_manipulation_central" type="ridgeback_vicon_estimator_node" name="ridgeback_vicon_estimator_node" required="true" output="screen" />

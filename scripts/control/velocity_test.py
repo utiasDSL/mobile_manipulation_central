@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Send a constant velocity to a single joint for a given duration to test the system response."""
+import argparse
 import numpy as np
 import rospy
 
 import mobile_manipulation_central as mm
 
-VELOCITY = 0.5
-DURATION = 1.0
+VELOCITY = 0.2
+DURATION = 2.0
 
 def main():
     parser = argparse.ArgumentParser()
@@ -38,8 +39,13 @@ def main():
     if args.dry_run:
         print(cmd_vel)
     else:
-        robot.publish_cmd_vel(cmd_vel)
-    rospy.sleep(DURATION)
+        t0 = rospy.Time.now().to_sec()
+        while not rospy.is_shutdown():
+            t = rospy.Time.now().to_sec()
+            if t - t0 >= DURATION:
+                break
+            robot.publish_cmd_vel(cmd_vel)
+            rate.sleep()
     robot.brake()
 
 

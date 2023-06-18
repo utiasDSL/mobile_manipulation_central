@@ -2,7 +2,12 @@
 
 <!-- Launch the Ridgeback, UR10, and gripper. F/T sensor is not launched here because thus far it appears to only work on-board. -->
 <launch>
-  <include file="$(find mobile_manipulation_central)/launch/ridgeback_vicon.launch" />
-  <include file="$(find mobile_manipulation_central)/launch/ur10.launch" />
+  <arg name="use_joy_stick_relay" default="false" doc="use joy stick for emergency stop"/>
+
+  <include file="$(find mobile_manipulation_central)/launch/ridgeback_vicon.launch" pass_all_args="true"/>
+  <include file="$(find mobile_manipulation_central)/launch/ur10.launch" pass_all_args="true"/>
   <include file="$(find mobile_manipulation_central)/launch/gripper.launch" />
+
+  <!-- Deadman's switch -->
+  <node pkg="mobile_manipulation_central" type="joy_stick_relay_node.py" name="joy_stick_relay_node" required="true" if="$(arg use_joy_stick_relay)" output="screen"/>
 </launch>

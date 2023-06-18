@@ -32,6 +32,11 @@ catkin_package(
    DEPENDS Eigen3 pinocchio
 )
 
+# catkin_install_python(PROGRAMS
+#    src/joy_stick_relay_node.py
+#    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#  )
+
 ###########
 ## Build ##
 ###########
