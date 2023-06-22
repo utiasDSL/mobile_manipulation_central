@@ -21,8 +21,8 @@ def main():
     home = mm.load_home_position()
 
     # create the simulation
-    sim = mm.simulation.BulletSimulation(TIMESTEP)
-    robot = mm.simulation.BulletSimulatedRobot(urdf_path, TOOL_JOINT_NAME)
+    sim = mm.BulletSimulation(TIMESTEP)
+    robot = mm.BulletSimulatedRobot(urdf_path, TOOL_JOINT_NAME)
     robot.reset_joint_configuration(home)
 
     r = robot.link_pose()[0]  # initial position

@@ -33,6 +33,10 @@ from mobile_manipulation_central.trajectory_generation import (
 )
 from mobile_manipulation_central.smoothing import ExponentialSmoother
 from mobile_manipulation_central import ros_utils, simulation
+from mobile_manipulation_central.simulation import (
+    BulletSimulation,
+    BulletSimulatedRobot,
+)
 
 BAG_DIR_ENV_VAR = "MOBILE_MANIPULATION_CENTRAL_BAG_DIR"
 BAG_DIR = os.environ[BAG_DIR_ENV_VAR]

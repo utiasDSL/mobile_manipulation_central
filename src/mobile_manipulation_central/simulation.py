@@ -31,13 +31,14 @@ class BulletSimulation:
             pyb.configureDebugVisualizer(pyb.COV_ENABLE_GUI, 0)
 
         # setup ground plane
+        # save its UID to reference it later (e.g., to change its friction)
         pyb.setAdditionalSearchPath(pybullet_data.getDataPath())
-        pyb.loadURDF("plane.urdf", [0, 0, 0])
+        self.ground_uid = pyb.loadURDF("plane.urdf", [0, 0, 0])
 
-    def step(self, t):
+    def step(self, t=0):
         """Step the simulation forward in time by one timestep.
 
-        Returns the new time.
+        Returns the incremented simulation time.
         """
         pyb.stepSimulation()
         return t + self.timestep
