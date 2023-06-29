@@ -203,6 +203,12 @@ files (for acceleration), the joint limits are:
 | 5     | ± 2π           | ± π               | ± 40                   |
 | 6     | ± 2π           | ± π               | ± 40                   |
 
+### IP addresses
+* Ridgeback: `192.168.131.1`
+* UR10: `192.168.131.40`
+* Gripper: `192.168.131.18`
+* F/T sensor: `192.168.131.14`
+
 ## Misc notes
 * The Ridgeback controller automatically publishes a zero command (i.e. brake)
   to the Ridgeback when a new connection is made; i.e., when something new
@@ -213,6 +219,13 @@ files (for acceleration), the joint limits are:
   rosrun controller_manager controller_manager start <controller_name>
   rosrun controller_manager controller_manager stop <controller_name>
   ```
+
+### Gripper control
+* The gripper typically uses real-time ethernet (Modbus TCP) for communication.
+  If this fails for some reason, it is also possible to communicate using
+  Modbus RTU over a USB connection. This requires the [Robotiq User
+  Interface](docs/manuals/robotiq/robotiq-user-interface.pdf) GUI, which only
+  runs in Windows.
 
 ### Check Ridgeback battery voltage
 When connected to the Ridgeback, do:
