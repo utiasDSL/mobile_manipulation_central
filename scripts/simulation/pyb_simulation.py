@@ -35,7 +35,9 @@ def main():
         r = robot.link_pose()[0]
         v = k * (rd - r)
         J = robot.jacobian()[:3, :]  # only take position Jacobian
-        u = J.T @ np.linalg.solve(J @ J.T, v)
+
+        # solve for minimum norm joint velocity u s.t. Ju = v
+        u = np.linalg.lstsq(J, v, rcond=None)[0]
 
         # note that in simulation the mobile base takes commands in the world
         # frame, but the real mobile base takes commands in the body frame
