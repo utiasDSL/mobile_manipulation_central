@@ -4,7 +4,7 @@ import pybullet_data
 
 
 class BulletSimulation:
-    def __init__(self, timestep, gravity=(0, 0, -9.81), extra_gui=False):
+    def __init__(self, timestep, gravity=(0, 0, -9.81), gui=True, extra_gui=False):
         """Basic PyBullet simulation.
 
         Parameters:
@@ -15,7 +15,10 @@ class BulletSimulation:
         """
         self.timestep = timestep
 
-        pyb.connect(pyb.GUI, options="--width=1280 --height=720")
+        if gui:
+            pyb.connect(pyb.GUI, options="--width=1280 --height=720")
+        else:
+            pyb.connect(pyb.DIRECT)
         pyb.setGravity(*gravity)
         pyb.setTimeStep(self.timestep)
 
