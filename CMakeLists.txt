@@ -8,13 +8,11 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   sensor_msgs
   urdf
+  pybind11_catkin
 )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(pinocchio REQUIRED)
-
-# Python setup
-catkin_python_setup()
 
 ###################################
 ## catkin specific configuration ##
@@ -56,22 +54,12 @@ link_directories(
 )
 
 # NOTE: bindings are not currently useful, so not built
-# pybind11_add_module(bindings SHARED
-#   src/pybindings.cpp
-# )
-# target_link_libraries(bindings PRIVATE
-#   ${catkin_LIBRARIES}
-# )
-
-## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/mobile_manipulation_central.cpp
-# )
-
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+pybind11_add_module(bindings SHARED
+  src/pybindings.cpp
+)
+target_link_libraries(bindings PRIVATE
+  ${catkin_LIBRARIES}
+)
 
 add_executable(ridgeback_vicon_estimator_node src/ridgeback_vicon_estimator_node.cpp)
 target_link_libraries(ridgeback_vicon_estimator_node
@@ -93,10 +81,13 @@ target_link_libraries(kinematics_example
 ## Install ##
 #############
 
-# install(TARGETS bindings
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
-# )
-# set_target_properties(bindings
-#     PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
-# )
+install(TARGETS bindings
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+)
+set_target_properties(bindings
+    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+)
+
+# Python setup
+catkin_python_setup()

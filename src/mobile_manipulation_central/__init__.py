@@ -37,7 +37,7 @@ from mobile_manipulation_central.simulation import (
     BulletSimulation,
     BulletSimulatedRobot,
 )
-from mobile_manipulation_central.kalman_filter import GaussianEstimate, KalmanFilter
+import mobile_manipulation_central.kalman_filter as kf
 
 BAG_DIR_ENV_VAR = "MOBILE_MANIPULATION_CENTRAL_BAG_DIR"
 BAG_DIR = os.environ[BAG_DIR_ENV_VAR]

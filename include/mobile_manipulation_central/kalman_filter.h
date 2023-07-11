@@ -6,6 +6,9 @@ namespace mm {
 namespace kf {
 
 struct GaussianEstimate {
+    GaussianEstimate() {}
+    GaussianEstimate(const Eigen::VectorXd& x, const Eigen::MatrixXd& P) : x(x), P(P) {}
+
     Eigen::VectorXd x;
     Eigen::MatrixXd P;
 };
@@ -34,6 +37,18 @@ GaussianEstimate correct(const GaussianEstimate& e, const Eigen::MatrixXd& C,
     correction.P = e.P - CP.transpose() * LLT.solve(CP);
     correction.x = e.x + CP.transpose() * LLT.solve(y - C * e.x);
     return correction;
+}
+
+// Perform predict and correct together
+GaussianEstimate predict_and_correct(const GaussianEstimate& e,
+                                     const Eigen::MatrixXd& A,
+                                     const Eigen::MatrixXd& Q,
+                                     const Eigen::VectorXd& v,
+                                     const Eigen::MatrixXd& C,
+                                     const Eigen::MatrixXd& R,
+                                     const Eigen::VectorXd& y) {
+    GaussianEstimate prediction = predict(e, A, Q, v);
+    return correct(prediction, C, R, y);
 }
 
 // Compute normalized innovation squared, which can be used for chi-squared
