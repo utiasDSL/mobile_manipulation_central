@@ -3,6 +3,7 @@
 <!-- Track the Ridgeback base using Vicon -->
 <launch>
   <arg name="use_joy_stick_relay" default="false" doc="use joy stick for emergency stop"/>
+  <param name="base_vicon_topic" value="/vicon/ThingBase_2/ThingBase_2"/>
 
   <include file="$(find mobile_manipulation_central)/launch/vicon.launch" />
 

@@ -245,6 +245,10 @@ If the voltage is approaching 22V, stop experiments and plug in the robot.
 * Motor driver: [puma_motor_driver](https://github.com/clearpathrobotics/puma_motor_driver)
 
 ## Known Issues
+* It appears that the on-board battery is wearing down. The battery voltage on
+  start-up (after charging) is now only about 25V, instead of the nominal full
+  charge of 27.6V. It is worth checking this regularly to assess the battery
+  health over time.
 * Occasionally when starting the robot the connection to the UR10 cannot be
   made. The `ur_robot_driver` node (launched as part of `thing.launch`) will
   complain with something along the lines of
@@ -255,6 +259,15 @@ If the voltage is approaching 22V, stop experiments and plug in the robot.
   goes away (i.e. the connection is established properly). There is no need to
   restart the Ridgeback. It appears that this is a startup issue; the
   connection is generally very stable once established.
+* Related to the above, it is possible that the connection from the laptop to
+  the Ridgeback will also not be available, despite the base (and possibly the
+  arm) appearing to be powered on normally. Restarting the base eventually
+  resolves the problem. It is possible that the ethernet cable between the
+  base's network switch and the arm's computer is wearing out and will need to
+  be replaced.
+* Occasionally after starting the arm, one may get protective stops after every
+  small movement of the arm, due to base deviation from desired path. So far,
+  it appears that restarting the arm resolved the problem.
 
 ## Todo
 * Add Kalman filter for Ridgeback base and UR10 joints

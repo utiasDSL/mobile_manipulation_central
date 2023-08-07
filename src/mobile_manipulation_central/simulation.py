@@ -14,11 +14,12 @@ class BulletSimulation:
                 to False.
         """
         self.timestep = timestep
+        self.gravity = np.array(gravity)
 
         if gui:
-            pyb.connect(pyb.GUI, options="--width=1280 --height=720")
+            self.client_id = pyb.connect(pyb.GUI, options="--width=1280 --height=720")
         else:
-            pyb.connect(pyb.DIRECT)
+            self.client_id = pyb.connect(pyb.DIRECT)
         pyb.setGravity(*gravity)
         pyb.setTimeStep(self.timestep)
 
