@@ -1,3 +1,4 @@
+import math
 import os
 from pathlib import Path
 
@@ -50,6 +51,11 @@ def bound_array(a, lb=None, ub=None):
     if ub is not None:
         a = np.minimum(a, ub)
     return a
+
+
+def wrap_to_pi(x):
+    """Wrap a value to [-π, π]"""
+    return math.remainder(x, 2 * np.pi)
 
 
 def load_home_position(name="default", path=None):

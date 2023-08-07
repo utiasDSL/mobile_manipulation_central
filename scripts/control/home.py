@@ -17,6 +17,9 @@ import numpy as np
 
 import mobile_manipulation_central as mm
 
+# NOTE: as currently implemented, the base will always move so as to avoid
+# wrapping around between +-π, even if that means taking the long way around
+# the circle
 
 MAX_JOINT_VELOCITY = 0.2
 MAX_JOINT_ACCELERATION = 1.0
@@ -88,7 +91,8 @@ def main():
             break
 
         qd, vd, _ = trajectory.sample(t)
-        cmd_vel = P_GAIN * (qd - robot.q) + vd
+        error = qd - robot.q
+        cmd_vel = P_GAIN * error + vd
 
         # this shouldn't be needed unless the trajectory is poorly tracked, but
         # we do it just in case for safety
