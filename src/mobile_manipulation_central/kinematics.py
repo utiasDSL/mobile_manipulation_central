@@ -213,8 +213,8 @@ class RobotKinematics:
 
 
 class MobileManipulatorKinematics(RobotKinematics):
-    # TODO support args to the xacro file
     def __init__(self, filepath=None, tool_link_name="gripper"):
+        # TODO: use the new XacroCompiler
         if filepath is None:
             filepath = package_file_path(
                 "mobile_manipulation_central", "urdf/xacro/thing_no_wheels.urdf.xacro"
