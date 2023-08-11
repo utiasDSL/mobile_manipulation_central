@@ -38,7 +38,7 @@ from mobile_manipulation_central.simulation import (
     BulletSimulation,
     BulletSimulatedRobot,
 )
-from mobile_manipulation_central.xacro_utils import XacroCompiler
+from mobile_manipulation_central.xacro_utils import XacroDoc
 import mobile_manipulation_central.kalman_filter as kf
 
 BAG_DIR_ENV_VAR = "MOBILE_MANIPULATION_CENTRAL_BAG_DIR"

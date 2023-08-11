@@ -41,7 +41,7 @@ def _xacro_compile(s, mappings=None, max_runs=10):
     return doc
 
 
-class XacroCompiler:
+class XacroDoc:
     """Convenience class to build URDF strings and files out of xacro components."""
     def __init__(self, s, mappings=None, max_runs=10):
         self.doc = _xacro_compile(s, mappings, max_runs)
