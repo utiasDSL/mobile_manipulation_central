@@ -4,11 +4,7 @@
   <version>0.0.0</version>
   <description>Shared code for mobile manipulator experiments.</description>
   <maintainer email="adam.heins@robotics.utias.utoronto.ca">Adam Heins</maintainer>
-
-  <!-- One license tag required, multiple allowed, one license per tag -->
-  <!-- Commonly used license strings: -->
-  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>TODO</license>
+  <license>MIT</license>
 
   <!-- The *depend tags are used to specify dependencies -->
   <!-- Dependencies can be catkin packages or system dependencies -->
