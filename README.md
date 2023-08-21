@@ -219,6 +219,8 @@ files (for acceleration), the joint limits are:
   rosrun controller_manager controller_manager start <controller_name>
   rosrun controller_manager controller_manager stop <controller_name>
   ```
+* The PS4 controller for the Ridgeback can be manually turned off by holding
+  the PS button for about 15 seconds (until the blue light turns off).
 
 ### Gripper control
 * The gripper typically uses real-time ethernet (Modbus TCP) for communication.

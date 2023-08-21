@@ -4,21 +4,24 @@ import numpy as np
 class PointToPointTrajectory:
     """A straight-line trajectory between two points."""
 
-    def __init__(self, start, goal, timescaling, t0=None):
+    def __init__(self, start, delta, timescaling, t0=None):
         self.start = start
-        self.goal = goal
-        self.delta = (goal - start)[:, None]
+        # self.goal = goal
+        # self.delta = (goal - start)[:, None]
+        self.delta = delta.reshape((3, 1))
+        self.goal = start + delta
         self.timescaling = timescaling
         self.t0 = t0
 
     @classmethod
-    def quintic(cls, start, end, max_vel, max_acc, t0=None, min_duration=None):
+    def quintic(cls, start, delta, max_vel, max_acc, t0=None, min_duration=None):
         """Build the trajectory with a quintic timescaling with duration
         suitable to satisfy velocity and acceleration constraints.
 
         Parameters:
             start: the start position of the trajectory
-            end: the end position of the trajectory
+            delta: change from the start position, such that the end of the
+                trajectory equals `start + delta`
             max_vel: maximum allowable velocity
             max_acc: maximum allowable acceleration
             t0: (Optional) start time of the trajectory. If not provided, this
@@ -28,11 +31,11 @@ class PointToPointTrajectory:
                 limits has a lower duration, we replace the timescaling with
                 one of `min_duration`.
         """
-        distance = np.linalg.norm(end - start)
+        distance = np.max(np.abs(delta))
         timescaling = QuinticTimeScaling.from_max_vel_acc(distance, max_vel, max_acc)
         if min_duration is not None and timescaling.duration < min_duration:
             timescaling = QuinticTimeScaling(min_duration)
-        return cls(start, end, timescaling, t0)
+        return cls(start, delta, timescaling, t0)
 
     @property
     def duration(self):

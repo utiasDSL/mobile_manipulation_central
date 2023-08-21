@@ -22,8 +22,8 @@ import mobile_manipulation_central as mm
 # the circle
 
 MAX_JOINT_VELOCITY = 0.2
-MAX_JOINT_ACCELERATION = 1.0
-MIN_DURATION = 1.0  # seconds
+MAX_JOINT_ACCELERATION = 0.5
+MIN_DURATION = 2.0  # seconds
 P_GAIN = 1
 CONVERGENCE_TOL = 1e-2
 RATE = 125  # Hz
@@ -76,8 +76,12 @@ def main():
     q0 = robot.q.copy()
 
     # build the trajectory
+    # to properly work with yaw angle, we need to use differences wrapped to π
+    delta = home - q0
+    if not args.arm_only:
+        delta[2] = mm.wrap_to_pi(delta[2])
     trajectory = mm.PointToPointTrajectory.quintic(
-        q0, home, MAX_JOINT_VELOCITY, MAX_JOINT_ACCELERATION, min_duration=MIN_DURATION
+        q0, delta, MAX_JOINT_VELOCITY, MAX_JOINT_ACCELERATION, min_duration=MIN_DURATION
     )
 
     # use P control + feedforward velocity to track the trajectory
@@ -92,6 +96,8 @@ def main():
 
         qd, vd, _ = trajectory.sample(t)
         error = qd - robot.q
+        if not args.arm_only:
+            error[2] = mm.wrap_to_pi(error[2])
         cmd_vel = P_GAIN * error + vd
 
         # this shouldn't be needed unless the trajectory is poorly tracked, but
