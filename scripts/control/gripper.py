@@ -20,6 +20,11 @@ from robotiq_3f_gripper_articulated_msgs.msg import Robotiq3FGripperRobotOutput
 import IPython
 
 
+# values are in the range [0, 255]
+SPEED = 255
+FORCE = 255
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -69,8 +74,8 @@ def main():
     else:
         msg.rPRA = 255
 
-    msg.rSPA = 255  # speed [0, 255]
-    msg.rFRA = 150  # force [0, 255]
+    msg.rSPA = SPEED
+    msg.rFRA = FORCE
 
     pub.publish(msg)
 
