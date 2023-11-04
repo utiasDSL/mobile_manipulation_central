@@ -17,11 +17,7 @@ import numpy as np
 
 import mobile_manipulation_central as mm
 
-# NOTE: as currently implemented, the base will always move so as to avoid
-# wrapping around between +-π, even if that means taking the long way around
-# the circle
-
-MAX_JOINT_VELOCITY = 0.2
+MAX_JOINT_VELOCITY = 0.25
 MAX_JOINT_ACCELERATION = 0.5
 MIN_DURATION = 2.0  # seconds
 P_GAIN = 1
@@ -101,7 +97,7 @@ def main():
         cmd_vel = P_GAIN * error + vd
 
         # this shouldn't be needed unless the trajectory is poorly tracked, but
-        # we do it just in case for safety
+        # we do it just in case for safety (e.g., bad measurements)
         cmd_vel = mm.bound_array(cmd_vel, lb=-MAX_JOINT_VELOCITY, ub=MAX_JOINT_VELOCITY)
 
         if args.dry_run:

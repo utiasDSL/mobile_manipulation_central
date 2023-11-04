@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Collect calibration data for the base.
+"""Collect calibration data for the base, to adjust the position of the center
+of rotation.
 
 Sends the base to a sequence of desired configurations, takes the average
 measured configuration at each point, and saves the data.

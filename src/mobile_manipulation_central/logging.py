@@ -41,6 +41,8 @@ class DataRecorder:
         self.proc = subprocess.Popen(rosbag_cmd)
 
     def record(self):
+        # NOTE: you may want to sleep briefly after this (~3 seconds) to make
+        # sure the bag is setup and recording before you do other things!
         self._mkdir()
         self._record_notes()
         self._record_bag()

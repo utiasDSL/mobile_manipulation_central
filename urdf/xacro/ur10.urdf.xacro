@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Just the UR10 by itself, compiled with our particular kinematic parameters. -->
+<robot name="ur10" xmlns:xacro="http://wiki.ros.org/xacro">
+  <xacro:arg name="kinematics_params" default="$(find mobile_manipulation_central)/config/ur10/kinematics_parameters.yaml"/>
+  <xacro:arg name="visual_params" default="$(find mobile_manipulation_central)/config/ur10/visual_parameters.yaml"/>
+
+  <xacro:include filename="$(find ur_description)/urdf/inc/ur10_macro.xacro"/>
+  <xacro:ur10_robot
+    prefix="ur10_"
+    visual_parameters_file="$(arg visual_params)"
+    kinematics_parameters_file="$(arg kinematics_params)"
+  />
+</robot>

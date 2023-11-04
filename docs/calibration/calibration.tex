@@ -68,34 +68,79 @@ where~$\bm{T}_{wb}$ depends on the base
 configuration~$\bm{q}_b=[x_b,y_b,\theta_b]^T$ and~$\bm{T}_{ae}$ depends on the
 arm configuration~$\bm{q}_a$.
 
+\section{Vicon Zero Pose}
+
+The \texttt{vicon\_bridge} package allows one to provide a \emph{zero pose} to
+specify the desired origin of a given model. Given the true robot frame~$\{r\}$
+and the Vicon model frame~$\{v\}$, we have
+\begin{equation*}
+  \bm{T}_{wr} = \bm{T}_{wv}\bm{T}_{vr},
+\end{equation*}
+where~$\bm{T}_{vr}$ is a constant transform we need to calibrate. The zero
+pose~$\bm{T}_{wv}^0$ is such that~$\bm{T}_{wr}=\bm{I}$, which
+implies~$\bm{T}_{wv}^0\bm{T}_{vr}=\bm{I}$ and
+thus
+\begin{equation*}
+  \bm{T}_{wv}^0 = \bm{T}_{vr}^{-1} = \begin{bmatrix} \bm{C}_{rv} & \bm{r}^{vr}_r \\ \bm{0}^T & 1 \end{bmatrix}
+\end{equation*}
+
 \section{Base Calibration}
 
-We need to calibration the Vicon measured base poses~$\hat{\bm{q}}_b$ so that
-the origin of~$\bm{T}_{wb}$ is correct. We have
-\begin{equation}
-  \bm{T}_{wb}(\bm{q}_b) = \begin{bmatrix}
-    \bm{C}_z(\theta_b) & \bm{r}_b \\
-    \bm{0}^T & 1
-  \end{bmatrix},
-\end{equation}
-where~$\bm{C}_z(\theta)\in SO(3)$ is a rotation about the $z$-axis
-and~$\bm{r}_b=[x_b,y_b,z_b]^T$ with~$z_b$ a constant. Our goal in this section
-is to calibrate the origin~$(x_b,y_b)$ so that it is located at the point of
-rotation of~$\theta_b$.
+\subsection{Center of Rotation}
 
-Starting at an arbitrary configuration~$\bm{q}_{b,0}$, we will move the base to
-a sequence of desired yaw angles~$\theta^d_{b,i}$ and obtain the corresponding
-measured configurations~$\hat{\bm{q}}_{b,i}$. We would like to find an
-offset~$\Delta\bm{r}_b$ such that
-\begin{equation}
-  \bm{r}^d_{b,i} = \hat{\bm{r}}_{b,i} + \Delta\bm{r}_b
+We need to calibration the Vicon measured base poses~$\hat{\bm{T}}_{wv}$ so that
+the origin of~$\bm{T}_{wb}$ is correct (i.e., we want it at the center of rotation, such that there is no translational motion when the base is commanded to rotate).
+% We have
+% \begin{equation}
+%   \bm{T}_{wb}(\bm{q}_b) = \begin{bmatrix}
+%     \bm{C}_{wb} & \bm{r}^{bw}_w \\
+%     \bm{0}^T & 1
+%   \end{bmatrix},
+% \end{equation}
+% where~$\bm{C}_{wb} = \bm{C}_z(\theta_b)\in SO(3)$ is a rotation about the $z$-axis
+% and~$\bm{r}^{bw}_w=[x_b,y_b,z_b]^T$ with~$z_b$ a constant. Our goal in this
+% section is to find the zero position~$\bm{r}^{vb}_b$ so that the point of
+% rotation is correct.
+% to calibrate the origin~$(x_b,y_b)$ so that it is located at the point of
+% rotation of~$\theta_b$.
+Starting at an arbitrary configuration~$\hat{\bm{T}}_{wv,0}$, we will move the base to
+a sequence of desired yaw angles~$\theta^d_i$ and obtain the corresponding
+measured configurations~$\hat{\bm{T}}_{wv,i}$. We want to find~$\bm{r}^{bv}_v$ such that~$\hat{\bm{r}}_{wb,i} = \hat{\bm{r}}_{wb,0}$
+% \begin{equation}
+%   \bm{r}^d_{b,i} = \hat{\bm{r}}_{b,i} + \Delta\bm{r}_b
+% \end{equation}
+is satisfied as closely as possible for each~$i$,
+% where the left-hand side is
+% \begin{equation*}
+%   \bm{T}^d_{wb,i} = \begin{bmatrix} \bm{C}_z(\theta^d_i) & \bm{0} \\ \bm{0}^T & 1 \end{bmatrix}\hat{\bm{T}}_{wv,0} = \begin{bmatrix}
+%   \bm{C}_z(\theta^d_i)\hat{\bm{C}}_{wv,0} & \bm{C}_z(\theta^d_i)\hat{\bm{r}}^{vw}_{w,0} \\ \bm{0}^T & 1
+%   \end{bmatrix}
+% \end{equation*}
+% and the right-hand side is
+% \begin{equation*}
+% \hat{\bm{T}}_{wv,i}\bm{T}_{bv}^{-1} = \begin{bmatrix}
+%     \hat{\bm{C}}_{wv,i} & \hat{\bm{C}}_{wv,i}\bm{r}^{bv}_v + \hat{\bm{r}}^{vw}_{w,i} \\ \bm{0}^{T} & 1
+%   \end{bmatrix}.
+% \end{equation*}
+% We will assume
+% that~$\hat{\bm{C}}_{wv,i}=\bm{C}_z(\theta^d_i)\hat{\bm{C}}_{wv,0}$ and look
+% only at the translational part, which yields the least-squares problem
+which yields the least-squares problem
+\begin{equation}\label{eq:base_position_lstsq}
+  \argmin_{\bm{r}^{bv}_v}\ \frac{1}{2}\sum_i\left\|\hat{\bm{C}}_{wv,i}\bm{r}^{bv}_v + \hat{\bm{r}}^{vw}_{w,i} - \hat{\bm{C}}_{wv,0}\hat{\bm{r}}^{bv}_{v} - \hat{\bm{r}}^{vw}_{w,0}\right\|^2.
 \end{equation}
-is satisfied as closely as possible for each~$i$. We will do so by solving the
-least squares problem
-\begin{equation}\label{eq:contact_force_formulation}
-  \argmin_{\Delta\bm{r}_b}\ \frac{1}{2}\sum_i\|\bm{r}_{b,0} - \hat{\bm{r}}_{b,i} - \Delta\bm{r}_b\|^2,
-\end{equation}
-where we've used the fact that~$\bm{r}^d_{b,i}=\bm{r}_{b,0}$.
+This gives us~$\bm{r}^{bv}_v$, but what we want for the Vicon zero pose is~$\bm{r}^{vb}_b=-\bm{C}_{bv}\bm{r}^{bv}_v$, so we need to negate the value and be careful to rotate it from the Vicon frame to the base frame if~$\bm{C}_{bv}\neq\bm{I}$.
+
+We can write~\eqref{eq:base_position_lstsq} in the form~$\|\bm{A}\bm{x}-\bm{b}\|^2$ by taking~$\bm{x}=\bm{r}^{bv}_v$ and
+\begin{align*}
+  \bm{A} &= \begin{bmatrix}
+    \hat{\bm{C}}_{wv,0} - \hat{\bm{C}}_{wv,0} \\ \vdots \\ \hat{\bm{C}}_{wv,n} - \hat{\bm{C}}_{wv,0}
+  \end{bmatrix}, & \bm{b} = \begin{bmatrix}
+  \hat{\bm{r}}^{vw}_{w,0} - \hat{\bm{r}}^{vw}_{w,0} \\ \vdots \\ \hat{\bm{r}}^{vw}_{w,0} - \hat{\bm{r}}^{vw}_{w,n}
+  \end{bmatrix}.
+\end{align*}
+
+\subsection{Orientation (Yaw)}
 
 \section{Arm--End Effector--Tool Calibration}
 

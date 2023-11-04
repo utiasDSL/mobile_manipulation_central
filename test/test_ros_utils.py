@@ -39,6 +39,66 @@ def test_lerp_list_linear():
 
     assert np.allclose(values1, [0.5, 1.5, 2.5])
 
+    # again but with negative values
+    times2 = [0, 1, 2, 3]
+    values2 = [0, -1, -2, -3]
+
+    # interpolated data
+    times1 = [0.5, 1.5, 2.5]
+    values1 = ros_utils.interpolate_list(times1, times2, values2)
+
+    assert np.allclose(values1, [-0.5, -1.5, -2.5])
+
+
+def test_lerp_list_beyond_bounds():
+    """Test linear interpolation of a list with times beyond its own range."""
+    # original data
+    times2 = [0, 1, 2, 3]
+    values2 = [0, 1, 2, 3]
+
+    # interpolated data
+    # values should not be interpolated beyond the end of the list (since we
+    # don't know what would be next)
+    times1 = [-0.5, 0.5, 1.5, 2.5, 3.5]
+    values1 = ros_utils.interpolate_list(times1, times2, values2)
+
+    assert np.allclose(values1, [0, 0.5, 1.5, 2.5, 3])
+
+
+def test_lerp_list_nonlinear():
+    """Test linear interpolation of a list values with different step sizes."""
+    # original data
+    # note the jump from value 2 to 10
+    times2 = [0, 1, 2, 3]
+    values2 = [0, 1, 2, 10]
+
+    # interpolated data
+    times1 = [0.5, 1.5, 2.5]
+    values1 = ros_utils.interpolate_list(times1, times2, values2)
+    assert np.allclose(values1, [0.5, 1.5, 6])
+
+    # original data
+    # now we have a decrease in the values
+    times2 = [0, 1, 2, 3]
+    values2 = [0, 1, 2, 0]
+
+    # interpolated data
+    times1 = [0.5, 1.5, 2.5]
+    values1 = ros_utils.interpolate_list(times1, times2, values2)
+    assert np.allclose(values1, [0.5, 1.5, 1])
+
+def test_lerp_list_vector():
+    """Test linear interpolation of a list values with different step sizes."""
+    # original data
+    # note the jump from value 2 to 10
+    times2 = [0, 1, 2]
+    values2 = np.array([[0, 0, 0], [1, 2, 3], [2, 4, 6]])
+
+    # interpolated data
+    times1 = [0.5, 1.5]
+    values1 = ros_utils.interpolate_list(times1, times2, values2)
+    assert np.allclose(values1, [[0.5, 1, 1.5], [1.5, 3, 4.5]])
+
 
 def test_slerp():
     """Test spherical linear interpolation (of quaternions)."""

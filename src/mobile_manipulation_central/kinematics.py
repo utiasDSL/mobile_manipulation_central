@@ -20,7 +20,7 @@ def _ref_frame_from_string(s):
 
 
 class RobotKinematics:
-    """Class representing the kinematics model ofa  robot."""
+    """Class representing the kinematics model of a robot."""
 
     def __init__(self, model, tool_link_name=None):
         self.model = model

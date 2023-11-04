@@ -2,9 +2,30 @@
 
 <!-- Launch connection with Vicon. -->
 <launch>
+  <arg name="barrel_vicon_model" value="ThingBarrel/ThingBarrel" />
+  <arg name="base_vicon_model" value="ThingBase_3/ThingBase_3" />
+
 	<node pkg="vicon_bridge" type="vicon_bridge" name="vicon" required="true" output="screen">
 		<param name="stream_mode" value="ClientPull" type="str" />
 		<param name="datastream_hostport" value="192.168.2.120:801" type="str" />
     <param name="tf_ref_frame_id" value="/odom" type="str" />
+
+    <!-- The convention is {calibrated pose} = {original pose} - {zero pose} -->
+    <!-- The idea is that if I put the model at what I want to be the zero pose and record that, the result is that {calibrated pose} is zeroed -->
+    <param name="$(arg base_vicon_model)/zero_pose/position/x" value="0.00333024" type="double" />
+    <param name="$(arg base_vicon_model)/zero_pose/position/y" value="0.00402133" type="double" />
+    <param name="$(arg base_vicon_model)/zero_pose/position/z"    value="0" type="double" />
+    <param name="$(arg base_vicon_model)/zero_pose/orientation/x" value="0" type="double" />
+    <param name="$(arg base_vicon_model)/zero_pose/orientation/y" value="0" type="double" />
+    <param name="$(arg base_vicon_model)/zero_pose/orientation/z" value="-0.00792683" type="double" />
+    <param name="$(arg base_vicon_model)/zero_pose/orientation/w" value="0.99996858" type="double" />
+
+  <param name="$(arg barrel_vicon_model)/zero_pose/position/x" value="-0.010235" type="double" />
+  <param name="$(arg barrel_vicon_model)/zero_pose/position/y" value="0.004047" type="double" />
+  <param name="$(arg barrel_vicon_model)/zero_pose/position/z" value="0" type="double" />
+  <param name="$(arg barrel_vicon_model)/zero_pose/orientation/x" value="0" type="double" />
+  <param name="$(arg barrel_vicon_model)/zero_pose/orientation/y" value="0" type="double" />
+  <param name="$(arg barrel_vicon_model)/zero_pose/orientation/z" value="0" type="double" />
+  <param name="$(arg barrel_vicon_model)/zero_pose/orientation/w" value="1" type="double" />
   </node>
 </launch>

@@ -14,6 +14,12 @@ class ExponentialSmoother:
         # zero time-constant means no filtering is done
         if self.τ <= 0:
             return y
-        c = 1.0 - np.exp(-dt / self.τ)
-        self.x = c * y + (1 - c) * self.x
+
+        # we can choose to initialize with the first measured value, before
+        # which x0 is None
+        if self.x is None:
+            self.x = y
+        else:
+            c = 1.0 - np.exp(-dt / self.τ)
+            self.x = c * y + (1 - c) * self.x
         return self.x

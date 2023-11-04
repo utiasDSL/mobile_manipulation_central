@@ -8,7 +8,7 @@ class PointToPointTrajectory:
         self.start = start
         # self.goal = goal
         # self.delta = (goal - start)[:, None]
-        self.delta = delta.reshape((3, 1))
+        self.delta = delta.reshape((delta.shape[0], 1))
         self.goal = start + delta
         self.timescaling = timescaling
         self.t0 = t0
