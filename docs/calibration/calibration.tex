@@ -30,6 +30,7 @@ style=authoryear,
 % \addbibresource{bibliography.bib}
 
 \DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\arctantwo}{\mathrm{arctan2}}
 
 \title{Mobile Manipulation Calibration}
 \author{Adam Heins}
@@ -88,44 +89,15 @@ thus
 
 \subsection{Center of Rotation}
 
-We need to calibration the Vicon measured base poses~$\hat{\bm{T}}_{wv}$ so that
-the origin of~$\bm{T}_{wb}$ is correct (i.e., we want it at the center of rotation, such that there is no translational motion when the base is commanded to rotate).
-% We have
-% \begin{equation}
-%   \bm{T}_{wb}(\bm{q}_b) = \begin{bmatrix}
-%     \bm{C}_{wb} & \bm{r}^{bw}_w \\
-%     \bm{0}^T & 1
-%   \end{bmatrix},
-% \end{equation}
-% where~$\bm{C}_{wb} = \bm{C}_z(\theta_b)\in SO(3)$ is a rotation about the $z$-axis
-% and~$\bm{r}^{bw}_w=[x_b,y_b,z_b]^T$ with~$z_b$ a constant. Our goal in this
-% section is to find the zero position~$\bm{r}^{vb}_b$ so that the point of
-% rotation is correct.
-% to calibrate the origin~$(x_b,y_b)$ so that it is located at the point of
-% rotation of~$\theta_b$.
-Starting at an arbitrary configuration~$\hat{\bm{T}}_{wv,0}$, we will move the base to
-a sequence of desired yaw angles~$\theta^d_i$ and obtain the corresponding
-measured configurations~$\hat{\bm{T}}_{wv,i}$. We want to find~$\bm{r}^{bv}_v$ such that~$\hat{\bm{r}}_{wb,i} = \hat{\bm{r}}_{wb,0}$
-% \begin{equation}
-%   \bm{r}^d_{b,i} = \hat{\bm{r}}_{b,i} + \Delta\bm{r}_b
-% \end{equation}
-is satisfied as closely as possible for each~$i$,
-% where the left-hand side is
-% \begin{equation*}
-%   \bm{T}^d_{wb,i} = \begin{bmatrix} \bm{C}_z(\theta^d_i) & \bm{0} \\ \bm{0}^T & 1 \end{bmatrix}\hat{\bm{T}}_{wv,0} = \begin{bmatrix}
-%   \bm{C}_z(\theta^d_i)\hat{\bm{C}}_{wv,0} & \bm{C}_z(\theta^d_i)\hat{\bm{r}}^{vw}_{w,0} \\ \bm{0}^T & 1
-%   \end{bmatrix}
-% \end{equation*}
-% and the right-hand side is
-% \begin{equation*}
-% \hat{\bm{T}}_{wv,i}\bm{T}_{bv}^{-1} = \begin{bmatrix}
-%     \hat{\bm{C}}_{wv,i} & \hat{\bm{C}}_{wv,i}\bm{r}^{bv}_v + \hat{\bm{r}}^{vw}_{w,i} \\ \bm{0}^{T} & 1
-%   \end{bmatrix}.
-% \end{equation*}
-% We will assume
-% that~$\hat{\bm{C}}_{wv,i}=\bm{C}_z(\theta^d_i)\hat{\bm{C}}_{wv,0}$ and look
-% only at the translational part, which yields the least-squares problem
-which yields the least-squares problem
+We need to calibration the Vicon measured base poses~$\hat{\bm{T}}_{wv}$ so
+that the origin of~$\bm{T}_{wb}$ is correct (i.e., we want it at the center of
+rotation, such that there is no translational motion when the base is commanded
+to rotate). Starting at an arbitrary configuration~$\hat{\bm{T}}_{wv,0}$, we
+will move the base to a sequence of desired yaw angles~$\theta^d_i$ and obtain
+the corresponding measured configurations~$\hat{\bm{T}}_{wv,i}$. We want to
+find~$\bm{r}^{bv}_v$ such that~$\hat{\bm{r}}_{wb,i} = \hat{\bm{r}}_{wb,0}$ is
+satisfied as closely as possible for each~$i$, which yields the least-squares
+problem
 \begin{equation}\label{eq:base_position_lstsq}
   \argmin_{\bm{r}^{bv}_v}\ \frac{1}{2}\sum_i\left\|\hat{\bm{C}}_{wv,i}\bm{r}^{bv}_v + \hat{\bm{r}}^{vw}_{w,i} - \hat{\bm{C}}_{wv,0}\hat{\bm{r}}^{bv}_{v} - \hat{\bm{r}}^{vw}_{w,0}\right\|^2.
 \end{equation}
@@ -141,6 +113,26 @@ We can write~\eqref{eq:base_position_lstsq} in the form~$\|\bm{A}\bm{x}-\bm{b}\|
 \end{align*}
 
 \subsection{Orientation (Yaw)}
+
+We also need to calibrate the Vicon measured base poses~$\hat{\bm{T}}_{wv}$ so
+that the yaw angle of the model is aligned with the actual forward direction
+of~$\bm{T}_{wb}$; that is, the direction of pure forward velocity. Starting at
+a particular pose~$\hat{\bm{T}}_{wv,0}$, we command the Ridgeback to drive
+forward and periodically measure the pose~$\hat{\bm{T}}_{wv,i}$. Ideally, the
+position of the base would be aligned with the $x$-axis of the initial frame.
+Let~$\bm{p}_i=\bm{C}_{wv,0}^T(\bm{r}^{vw}_{w,i}-\bm{r}^{vw}_{w,0})$. The yaw
+error is~$\Delta\theta_i=\arctantwo(p_{y,i},p_{x,i})$. We then solve the problem
+\begin{equation}\label{eq:base_yaw_lstsq}
+  \argmin_{\theta_{vb}}\ \frac{1}{2}\sum_i(\theta_{vb}-\Delta\theta_i)^2,
+\end{equation}
+with corresponding Vicon zero orientation~$\bm{C}_{bv}=\bm{C}_z(-\theta_{vb})$.
+
+\textbf{Important:} remember to take this into account when computing the
+overall base zero pose including the position, as discussed above.
+
+We can write~\eqref{eq:base_yaw_lstsq} in the
+form~$\|\bm{A}x-\bm{b}\|^2$ by taking~$x=\theta_{bv}$,~$\bm{A}$ a vector of
+ones, and~$\bm{b}$ a vector of the angle errors~$\Delta\theta_i$.
 
 \section{Arm--End Effector--Tool Calibration}
 
@@ -170,5 +162,21 @@ over the manifold~$SE(3)$, where~$\bm{T}_{wt}$ is computed using~\eqref{eq:kinem
 is the error between the poses. We can include any prior information about the
 transforms as an initial guess for the solver.
 
+\section{Force Sensor Calibration}
+
+Here our goal is to find the orientation~$\bm{C}_{bf}$ of the force sensor
+frame~$\{f\}$ about the $x$- and $y$-axes of a frame~$\{b\}$ with a gravity-aligned
+$z$-axis. To do so, we will zero the sensor and then attach a mass~$m$ to it
+and collect a set of force measurements~$\{\bm{f}_{f,i}\}_{i=1}^n$. We then
+solve the nonlinear least-squares problem
+\begin{equation*}
+  \argmin_{\Delta\bm{C}\in SO(3)} \frac{1}{2}\sum_i\|\Delta\bm{C}\bar{\bm{C}}_{bf}\bm{f}_{f,i}-m\bm{g}\|^2
+\end{equation*}
+for the orientation offset~$\Delta\bm{C}$ such
+that~$\bm{C}_{bf}=\Delta\bm{C}\bar{\bm{C}}_{bf}$ with~$\bar{\bm{C}}_{bf}$ a
+nominal guess for the orientation.
+
+Calibrating the yaw angle offset would be more complicated, and at least
+require multiple orientations of~$\bm{C}_{bf}$ to identify.
 
 \end{document}
