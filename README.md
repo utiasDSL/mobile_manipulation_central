@@ -209,6 +209,15 @@ files (for acceleration), the joint limits are:
 * Gripper: `192.168.131.18`
 * F/T sensor: `192.168.131.14`
 
+### Ridgeback lights
+The lights on the corners of the Ridgeback mean different things depending on
+the color. The main ones are:
+
+* Green: plugged in, charging
+* Flashing red: e-stop
+* Front white, back red: ready to drive
+* Flashing yellow: battery level is below 24V, charge soon
+
 ## Misc notes
 * The Ridgeback controller automatically publishes a zero command (i.e. brake)
   to the Ridgeback when a new connection is made; i.e., when something new
