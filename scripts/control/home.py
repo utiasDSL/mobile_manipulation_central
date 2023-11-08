@@ -26,6 +26,8 @@ RATE = 125  # Hz
 
 
 def main():
+    np.set_printoptions(precision=6, suppress=True)
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "name",
@@ -80,9 +82,13 @@ def main():
         q0, delta, MAX_JOINT_VELOCITY, MAX_JOINT_ACCELERATION, min_duration=MIN_DURATION
     )
 
+    q_prev = q0
+
     # use P control + feedforward velocity to track the trajectory
     while not rospy.is_shutdown():
         t = rospy.Time.now().to_sec()
+
+        # TODO strictly speaking this should also wrap using the delta
         dist = np.linalg.norm(home - robot.q)
 
         # we want to both let the trajectory complete and ensure we've
@@ -95,6 +101,11 @@ def main():
         if not args.arm_only:
             error[2] = mm.wrap_to_pi(error[2])
         cmd_vel = P_GAIN * error + vd
+
+        # print(f"error = {np.linalg.norm(error)}")
+        Δq = robot.q - q_prev
+        q_prev = robot.q
+        # print(f"Δq = {Δq}")
 
         # this shouldn't be needed unless the trajectory is poorly tracked, but
         # we do it just in case for safety (e.g., bad measurements)

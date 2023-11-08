@@ -5,7 +5,8 @@ import argparse
 import numpy as np
 import rosbag
 import matplotlib.pyplot as plt
-from mobile_manipulation_central import BAG_DIR, ros_utils, sysid
+from mobile_manipulation_central import BAG_DIR, ros_utils
+import mobile_manipulation_central.system_identification as sysid
 
 
 BAG_PATHS = [
