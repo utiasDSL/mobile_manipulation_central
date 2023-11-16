@@ -41,11 +41,10 @@
     <limit effort="0.0" velocity="1000.0"/>
   </joint>
 
-  <!-- Note the z-offset to raise the base off the ground, to avoid collision issues. Without this, there are vibrations and other artifacts from resolving the ground collision that result in significant error in the balanced object. -->
 	<joint name="base_to_y_joint" type="continuous">
     <parent link="y_prismatic_link"/>
     <child link="base_link"/>
     <axis xyz="0 0 1"/>
-    <origin rpy="0 0 0" xyz="0 0 0.01"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
   </joint>
 </robot>

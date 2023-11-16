@@ -1,6 +1,8 @@
 import pytest
 import numpy as np
 from scipy.linalg import block_diag
+import pybullet as pyb
+import pyb_utils
 
 import upright_core as core
 import mobile_manipulation_central as mm
@@ -119,3 +121,29 @@ def test_acceleration_mapping():
     A = np.concatenate((model.link_classical_acceleration()))
 
     assert np.allclose(A_pred, A)
+
+
+def test_compare_pose_with_pybullet():
+    model = mm.MobileManipulatorKinematics(tool_link_name="gripper")
+
+    pyb.connect(pyb.DIRECT)
+    xacro_doc = mm.XacroDoc.from_package_file(
+        package_name="mobile_manipulation_central",
+        relative_path="urdf/xacro/thing_pyb.urdf.xacro",
+    )
+    with xacro_doc.temp_urdf_file_path() as urdf_path:
+        robot_id = pyb.loadURDF(
+            urdf_path,
+            [0, 0, 0],
+            useFixedBase=True,
+        )
+    robot = pyb_utils.Robot(robot_id, tool_link_name="gripper")
+
+    q0 = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0])
+    model.forward(q0)
+    robot.reset_joint_configuration(q0)
+
+    r_model, C_model = model.link_pose(rotation_matrix=True)
+    r_pyb, C_pyb = robot.get_link_frame_pose(as_rotation_matrix=True)
+    assert np.allclose(r_model, r_pyb)
+    assert np.allclose(C_model, C_pyb)

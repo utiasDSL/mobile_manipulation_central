@@ -54,12 +54,22 @@ joints.
      <origin rpy="0 0 0" xyz="0 0 0"/>
     </inertial>
   </link>
+
+  <!-- Note the z-offset to raise the base off the ground, to avoid collision issues in simulation. Without this, there are vibrations and other artifacts from resolving the ground collision that result in significant error in the balanced object. We include it in general for the real robot as well for consistency, to be resolved by calibration. -->
+  <joint name="dummy_base_link_joint" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0.01"/>
+    <parent link="base_link"/>
+    <child link="dummy_base_link"/>
+  </joint>
+  <link name="dummy_base_link"/>
+
   <!-- Transform between base and arm can be calibrated and is loaded from parameters. -->
   <joint name="base_link_joint" type="fixed">
     <xacro:transformed_origin name="base_to_arm_transform" />
-    <parent link="base_link"/>
+    <parent link="dummy_base_link"/>
     <child link="chassis_link"/>
   </joint>
+
   <link name="chassis_link">
     <visual>
       <geometry>
