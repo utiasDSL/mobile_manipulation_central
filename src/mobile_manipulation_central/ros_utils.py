@@ -267,11 +267,6 @@ def interpolate_list(new_times, old_times, values, method="lerp"):
     return aligned_values
 
 
-def compile_xacro(xacro_path):
-    """Compile a xacro file into raw URDF."""
-    return xacro.process_file(xacro_path).toxml()
-
-
 def vicon_topic_name(name):
     return "/".join(["/vicon", name, name])
 

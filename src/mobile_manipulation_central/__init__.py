@@ -11,7 +11,6 @@ from mobile_manipulation_central.ros_utils import (
     parse_time,
     parse_ur10_joint_state_msgs,
     trim_msgs,
-    compile_xacro,
 )
 from mobile_manipulation_central.ros_interface import (
     ViconObjectInterface,

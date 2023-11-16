@@ -4,7 +4,8 @@ import pinocchio
 import rospkg
 from spatialmath.base import r2q
 
-from mobile_manipulation_central.ros_utils import compile_xacro, package_file_path
+from mobile_manipulation_central.ros_utils import package_file_path
+from mobile_manipulation_central.xacro_utils import XacroDoc
 
 
 def _ref_frame_from_string(s):
@@ -214,12 +215,11 @@ class RobotKinematics:
 
 class MobileManipulatorKinematics(RobotKinematics):
     def __init__(self, filepath=None, tool_link_name="gripper"):
-        # TODO: use the new XacroCompiler
         if filepath is None:
             filepath = package_file_path(
                 "mobile_manipulation_central", "urdf/xacro/thing_no_wheels.urdf.xacro"
             )
-        urdf_str = compile_xacro(filepath)
+        urdf_str = XacroDoc.from_file(filepath).to_urdf_string()
 
         # 3-DOF base joint
         root_joint = pinocchio.JointModelComposite(3)
