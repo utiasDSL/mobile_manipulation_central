@@ -31,7 +31,8 @@ from mobile_manipulation_central.trajectory_generation import (
     QuinticTimeScaling,
 )
 from mobile_manipulation_central.smoothing import ExponentialSmoother
-from mobile_manipulation_central import ros_utils, simulation
+from mobile_manipulation_central import simulation
+from mobile_manipulation_central import ros_utils
 from mobile_manipulation_central.simulation import (
     BulletSimulation,
     BulletSimulatedRobot,
@@ -54,7 +55,7 @@ def bound_array(a, lb=None, ub=None):
 
 
 def wrap_to_pi(x):
-    """Wrap a value to [-π, π]"""
+    """Wrap a value to [-pi, pi]"""
     return math.remainder(x, 2 * np.pi)
 
 
