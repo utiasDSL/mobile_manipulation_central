@@ -4,6 +4,11 @@ from pathlib import Path
 import subprocess
 import signal
 
+from geometry_msgs.msg import TransformStamped
+
+from mobile_manipulation_central.ros_utils import vicon_topic_name
+
+
 ROSBAG_CMD_ROOT = ["rosbag", "record"]
 
 
@@ -49,3 +54,59 @@ class DataRecorder:
 
     def close(self):
         self.proc.send_signal(signal.SIGINT)
+
+
+class ViconRateChecker:
+    """Check that Vicon rate is what you expect it to be.
+
+    It is a good idea to put this before your control loops to make sure the
+    data you record is what you want.
+
+    Parameters
+    ----------
+    vicon_object_name : str
+        The name of the Vicon object of which to count the messages.
+    expected_rate : float
+        Expected rate of Vicon message publishing, in Hz.
+    duration : float
+        Duration over which to record the messages, in seconds.
+    bound : float
+        The actual rate is considered acceptable if it lies within ``bound`` Hz
+        of the expected rate.
+    """
+    def __init__(self, vicon_object_name, expected_rate=100, duration=5, bound=1):
+        assert expected_rate > 0
+        assert duration > 0
+        assert bound >= 0
+
+        self.expected_rate = expected_rate
+        self.duration = duration
+        self.bound = bound
+        self.msg_count = 0
+        self.start_time = None
+
+        topic_name = vicon_topic_name(vicon_object_name)
+        self.vicon_sub = rospy.Subscriber(topic_name, TransformStamped, self._vicon_cb)
+
+    def _vicon_cb(self, msg):
+        now = rospy.Time.now().to_sec()
+
+        # record first time a message is received
+        if self.start_time is None:
+            self.start_time = now
+
+        # stop counting messages once ``self.duration`` seconds has elapsed
+        if self.start_time + 5 > self.duration:
+            self.vicon_sub.unregister()
+            self._check_rate()
+            return
+
+        self.msg_count += 1
+
+    def _check_rate(self):
+        rate = self.msg_count / self.duration
+        lower = self.expected_rate - self.bound
+        upper = self.expected_rate + self.bound
+        assert (
+            lower <= rate <= upper
+        ), "Expected Vicon rate is {self.expected_rate} Hz, but actual rate is {rate} Hz."
