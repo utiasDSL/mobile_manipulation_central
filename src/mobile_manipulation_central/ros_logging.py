@@ -4,6 +4,7 @@ from pathlib import Path
 import subprocess
 import signal
 
+import rospy
 from geometry_msgs.msg import TransformStamped
 
 from mobile_manipulation_central.ros_utils import vicon_topic_name
@@ -66,47 +67,75 @@ class ViconRateChecker:
     ----------
     vicon_object_name : str
         The name of the Vicon object of which to count the messages.
-    expected_rate : float
-        Expected rate of Vicon message publishing, in Hz.
     duration : float
         Duration over which to record the messages, in seconds.
-    bound : float
-        The actual rate is considered acceptable if it lies within ``bound`` Hz
-        of the expected rate.
     """
-    def __init__(self, vicon_object_name, expected_rate=100, duration=5, bound=1):
-        assert expected_rate > 0
-        assert duration > 0
-        assert bound >= 0
 
-        self.expected_rate = expected_rate
+    def __init__(self, vicon_object_name, duration=5):
+        assert duration > 0
+
         self.duration = duration
-        self.bound = bound
         self.msg_count = 0
         self.start_time = None
+        self.started = False
+        self.done = False
 
-        topic_name = vicon_topic_name(vicon_object_name)
-        self.vicon_sub = rospy.Subscriber(topic_name, TransformStamped, self._vicon_cb)
+        self.topic_name = vicon_topic_name(vicon_object_name)
+        self.vicon_sub = rospy.Subscriber(self.topic_name, TransformStamped, self._vicon_cb)
 
     def _vicon_cb(self, msg):
-        now = rospy.Time.now().to_sec()
+        """Vicon subscriber callback."""
+        if not self.started:
+            return
 
         # record first time a message is received
+        now = rospy.Time.now().to_sec()
         if self.start_time is None:
             self.start_time = now
 
         # stop counting messages once ``self.duration`` seconds has elapsed
-        if self.start_time + 5 > self.duration:
+        if now - self.start_time > self.duration:
             self.vicon_sub.unregister()
-            self._check_rate()
+            self.done = True
             return
 
         self.msg_count += 1
 
-    def _check_rate(self):
+    def check_rate(self, expected_rate, bound=1, verbose=True):
+        """Check the Vicon rate.
+
+        Parameters
+        ----------
+        expected_rate : float, positive
+            Expected rate of Vicon message publishing, in Hz.
+        bound : float
+            The actual rate is considered acceptable if it lies within
+            ``bound`` Hz of the expected rate.
+
+        Returns
+        -------
+        : bool
+            ``True`` if the measured Vicon rate is within the bounds, ``False``
+            otherwise.
+        """
+
+        self.started = True
+
+        # let the user know if we aren't receiving messages
+        rate = rospy.Rate(1)
+        while not self.done and not rospy.is_shutdown():
+            rate.sleep()
+            if self.msg_count == 0:
+                print(f"I haven't received any messages on {self.topic_name}")
+
         rate = self.msg_count / self.duration
-        lower = self.expected_rate - self.bound
-        upper = self.expected_rate + self.bound
-        assert (
-            lower <= rate <= upper
-        ), "Expected Vicon rate is {self.expected_rate} Hz, but actual rate is {rate} Hz."
+        lower = expected_rate - bound
+        upper = expected_rate + bound
+
+        if verbose:
+            print(f"Received {self.msg_count} Vicon messages over {self.duration} seconds.")
+            print(f"Expected Vicon rate = {expected_rate} Hz")
+            print(f"Average Vicon rate = {rate} Hz")
+
+        return lower <= rate <= upper
+
