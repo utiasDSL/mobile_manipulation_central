@@ -190,3 +190,32 @@ class RobotSignalHandler:
             self.robot.brake()
             time.sleep(0.1)  # TODO necessary?
         rospy.signal_shutdown("Caught SIGINT!")
+
+
+class SimpleSignalHandler:
+    """Simple signal handler that just sets a flag when a signal has been caught.
+
+    Parameters
+    ----------
+    sigint : bool
+        Catch SIGINT if ``True`` (the default).
+    sigterm : bool
+        Catch SIGTERM if ``True`` (the default).
+
+    Attributes
+    ----------
+    received : bool
+        Initially ``False``; becomes ``True`` once one of the signals has been
+        received.
+    """
+
+    def __init__(self, sigint=True, sigterm=True):
+        self.received = False
+        if sigint:
+            signal.signal(signal.SIGINT, self.handler)
+        if sigterm:
+            signal.signal(signal.SIGTERM, self.handler)
+
+    def handler(self, signum, frame):
+        print(f"Received signal: {signum}")
+        self.received = True
