@@ -37,7 +37,6 @@ from mobile_manipulation_central.simulation import (
     BulletSimulation,
     BulletSimulatedRobot,
 )
-from mobile_manipulation_central.xacro_utils import XacroDoc
 from mobile_manipulation_central.ros_logging import DataRecorder, ViconRateChecker
 import mobile_manipulation_central.kalman_filter as kf
 

@@ -3,6 +3,7 @@ import numpy as np
 from scipy.linalg import block_diag
 import pybullet as pyb
 import pyb_utils
+from xacrodoc import XacroDoc
 
 import upright_core as core
 import mobile_manipulation_central as mm
@@ -127,7 +128,7 @@ def test_compare_pose_with_pybullet():
     model = mm.MobileManipulatorKinematics(tool_link_name="gripper")
 
     pyb.connect(pyb.DIRECT)
-    xacro_doc = mm.XacroDoc.from_package_file(
+    xacro_doc = XacroDoc.from_package_file(
         package_name="mobile_manipulation_central",
         relative_path="urdf/xacro/thing_pyb.urdf.xacro",
     )

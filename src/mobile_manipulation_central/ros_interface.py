@@ -1,6 +1,8 @@
+import time
+import signal
+
 import numpy as np
 import rospy
-import signal
 
 from spatialmath.base import rotz
 from geometry_msgs.msg import Twist
@@ -36,6 +38,7 @@ class ViconObjectInterface:
         self.msg_received = True
 
 
+# TODO make abstract
 class RobotROSInterface:
     """Base class for defining ROS interfaces for robots."""
 
@@ -168,6 +171,9 @@ class MobileManipulatorROSInterface:
         return np.concatenate((self.base.v, self.arm.v))
 
 
+# TODO: sometimes this hangs at shutdown
+# usually this occurs in rospy.impl.registration.RegManager.cleanup, in the
+# call to `multi`
 class RobotSignalHandler:
     """Custom signal handler to brake the robot before shutting down ROS."""
 
@@ -175,10 +181,12 @@ class RobotSignalHandler:
         self.robot = robot
         self.dry_run = dry_run
         signal.signal(signal.SIGINT, self.handler)
+        signal.signal(signal.SIGTERM, self.handler)
 
     def handler(self, signum, frame):
         print("Received SIGINT.")
-        print("Braking robot.")
         if not self.dry_run:
+            print("Braking robot.")
             self.robot.brake()
+            time.sleep(0.1)  # TODO necessary?
         rospy.signal_shutdown("Caught SIGINT!")
