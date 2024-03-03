@@ -4,6 +4,7 @@
 <launch>
   <arg name="barrel_vicon_model" value="ThingBarrel/ThingBarrel" />
   <arg name="base_vicon_model" value="ThingBase_3/ThingBase_3" />
+  <arg name="tray_vicon_model" value="ThingWoodTray/ThingWoodTray" />
 
 	<node pkg="vicon_bridge" type="vicon_bridge" name="vicon" required="true" output="screen">
 		<param name="stream_mode" value="ClientPull" type="str" />
@@ -27,5 +28,13 @@
   <param name="$(arg barrel_vicon_model)/zero_pose/orientation/y" value="0" type="double" />
   <param name="$(arg barrel_vicon_model)/zero_pose/orientation/z" value="0" type="double" />
   <param name="$(arg barrel_vicon_model)/zero_pose/orientation/w" value="1" type="double" />
+
+  <param name="$(arg tray_vicon_model)/zero_pose/position/x" value="0" type="double" />
+  <param name="$(arg tray_vicon_model)/zero_pose/position/y" value="0" type="double" />
+  <param name="$(arg tray_vicon_model)/zero_pose/position/z" value="0" type="double" />
+  <param name="$(arg tray_vicon_model)/zero_pose/orientation/x" value="0.027408668602648924" type="double" />
+  <param name="$(arg tray_vicon_model)/zero_pose/orientation/y" value="0.0013204424447168584" type="double" />
+  <param name="$(arg tray_vicon_model)/zero_pose/orientation/z" value="0.0034210040275115036" type="double" />
+  <param name="$(arg tray_vicon_model)/zero_pose/orientation/w" value="0.9996175859040417" type="double" />
   </node>
 </launch>
