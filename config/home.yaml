@@ -1,7 +1,4 @@
 # contains different home positions for use with the home.py script
-# these are the home positions currently used for the Keep it Upright paper
-# best practice is to make your own config file for home positions and tell the
-# home.py script about it using the --config argument
-default: [-1.0, -1.0, 0, 1.5708, -0.7854,  1.5708, -0.7854,  1.5708, 1.3100]
-projectile1: [-2.0, 1.0, 0, 1.5708, -0.7854,  1.5708, -0.7854,  1.5708, 1.3100]
-projectile2: [-1.5, 2.5, -1.5708, 1.5708, -0.7854,  1.5708, -0.7854,  1.5708, 1.3100]
+# best practice is to make your own config file for home positions and tell
+# the home.py script about it using the --config argument
+default: [0, 0, 0, 1.5708, -0.7854,  1.5708, -0.7854,  1.5708, 1.3100]

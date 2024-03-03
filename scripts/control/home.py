@@ -43,6 +43,7 @@ def main():
     parser.add_argument(
         "--config",
         help="Path to YAML file to load the home configurations from.",
+        required=True,
     )
     grp = parser.add_mutually_exclusive_group()
     grp.add_argument("--arm-only", help="Only home the arm", action="store_true")
