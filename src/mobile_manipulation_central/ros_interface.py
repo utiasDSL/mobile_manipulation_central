@@ -200,7 +200,7 @@ class SimpleSignalHandler:
     sigint : bool
         Catch SIGINT if ``True`` (the default).
     sigterm : bool
-        Catch SIGTERM if ``True`` (the default).
+        Catch SIGTERM if ``True`` (default is ``False``).
 
     Attributes
     ----------
@@ -209,7 +209,7 @@ class SimpleSignalHandler:
         received.
     """
 
-    def __init__(self, sigint=True, sigterm=True):
+    def __init__(self, sigint=True, sigterm=False):
         self.received = False
         if sigint:
             signal.signal(signal.SIGINT, self.handler)
