@@ -9,9 +9,11 @@ recorded by Vicon.
 """
 import argparse
 import datetime
+import time
 
 import rospy
 import numpy as np
+from scipy.spatial.transform import Rotation
 
 import mobile_manipulation_central as mm
 
@@ -41,15 +43,54 @@ DESIRED_ARM_CONFIGURATIONS = np.array([
 
 
 def average_quaternion(Qs):
-    """Compute the average of a 2D array of quaternions, one per row."""
+    """Compute the average of a set of quaternions.
+
+    The quaternions are in ``[x, y, z, w]`` order.
+
+    Parameters
+    ----------
+    Qs : np.ndarray, shape (n, 4)
+        The quaternions to average.
+
+    Returns
+    -------
+    : np.ndarray, shape (4,)
+        The average quaternion.
+    """
     Qs = np.array(Qs)
     e, V = np.linalg.eig(Qs.T @ Qs)
     i = np.argmax(e)
-    return V[:, i]
+    Q_avg = V[:, i]
+
+    # TODO could use scipy but I want to canonical option, which requires a
+    # more recent version
+    # Q_avg2 = Rotation.from_quat(Qs).mean().as_quat()
+    # print(f"Q_avg = {Q_avg}")
+    # print(f"Q_avg2 = {Q_avg2}")
+    return Q_avg
 
 
 def average_measurements(robot, vicon, rate, duration=5.0):
-    """Compute the average pose returned from Vicon data over given duration."""
+    """Compute the average measurements over a given duration.
+
+    Parameters
+    ----------
+    robot : MobileManipulatorROSInterface
+        Interface to the robot.
+    vicon : ViconObjectInterface
+        Interface to the Vicon object.
+    rate : rospy.Rate
+        Rate for the measurement loop.
+    duration : float, non-negative
+        The duration over which to compute the averages.
+
+    Returns
+    -------
+    : tuple
+        A tuple ``(q, r, Q)``, where ``q`` is the average joint configuration,
+        ``r`` is the average object position, and ``Q`` is the average object
+        orientation as a quaternion ``[x, y, z, w]``.
+    """
     qs = []  # joint configurations
     Qs = []  # object orientation quaternions
     rs = []  # object translations
@@ -79,6 +120,11 @@ def main():
         default="arm_calibration_data",
     )
     parser.add_argument(
+        "--home-config",
+        help="Path to YAML file to load the home configurations from.",
+        required=True,
+    )
+    parser.add_argument(
         "--home-name",
         help="Name of the home position to use for the base.",
         default="default",
@@ -87,9 +133,10 @@ def main():
 
     # home position is used to determine where the base should move to (and
     # stay at) for all data collection
-    home = mm.load_home_position(args.home_name)
+    home = mm.load_home_position(name=args.home_name, path=args.home_config)
 
-    rospy.init_node("arm_calibration_data_collection")
+    rospy.init_node("arm_calibration_data_collection", disable_signals=True)
+    signal_handler = mm.SimpleSignalHandler()
 
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     robot = mm.MobileManipulatorROSInterface()
@@ -97,8 +144,11 @@ def main():
     rate = rospy.Rate(RATE)
 
     # wait until robot and Vicon feedback has been received
-    while not rospy.is_shutdown() and not (robot.ready() and vicon.ready()):
+    while not rospy.is_shutdown() and not signal_handler.received:
+        if robot.ready() and vicon.ready():
+            break
         rate.sleep()
+
     q0 = robot.q.copy()
 
     num_configs = DESIRED_ARM_CONFIGURATIONS.shape[0]
@@ -118,14 +168,18 @@ def main():
     Qs = []
 
     goal = goals[0, :]
+    delta = goal - q0
     trajectory = mm.PointToPointTrajectory.quintic(
-        q0, goal, MAX_JOINT_VELOCITY, MAX_JOINT_ACCELERATION
+        start=q0,
+        delta=delta,
+        max_vel=MAX_JOINT_VELOCITY,
+        max_acc=MAX_JOINT_ACCELERATION,
     )
     print(f"Moving to goal 0 with duration {trajectory.duration} seconds.")
 
     # use P control to navigate to robot home, with limits on the velocity
     idx = 0
-    while not rospy.is_shutdown():
+    while not rospy.is_shutdown() and not signal_handler.received:
         t = rospy.Time.now().to_sec()
         dist = np.linalg.norm(goal - robot.q)
         if trajectory.done(t) and dist < CONVERGENCE_TOL:
@@ -147,8 +201,12 @@ def main():
 
             # build trajectory to the next waypoint
             goal = goals[idx, :]
+            delta = goal - q
             trajectory = mm.PointToPointTrajectory.quintic(
-                q, goal, MAX_JOINT_VELOCITY, MAX_JOINT_ACCELERATION
+                start=q,
+                delta=delta,
+                max_vel=MAX_JOINT_VELOCITY,
+                max_acc=MAX_JOINT_ACCELERATION,
             )
             print(f"Moving to goal {idx} with duration {trajectory.duration} seconds.")
 
@@ -160,7 +218,9 @@ def main():
 
         rate.sleep()
 
+    print("Braking robot")
     robot.brake()
+    time.sleep(0.5)
 
     filename = f"{args.filename}_{timestamp}.npz"
     np.savez_compressed(filename, qds=goals, qs=qs, rs=rs, Qs=Qs)
