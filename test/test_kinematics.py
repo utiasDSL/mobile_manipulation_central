@@ -10,14 +10,35 @@ import mobile_manipulation_central as mm
 
 
 def adj(C=None, r=None):
-    """Adjoint of SE(3)."""
+    """Adjoint of SE(3).
+
+    Parameters
+    ----------
+    C : np.ndarray, shape(3, 3) or None
+        Rotation matrix.
+    r : np.ndarray, shape (3,) or None
+        Translation vector.
+
+    Returns
+    -------
+    : np.ndarray, shape (6, 6)
+        The adjoint of the transformation.
+    """
     if C is None:
         C = np.eye(3)
     if r is None:
         r = np.zeros(3)
     Z = np.zeros((3, 3))
     R = core.math.skew3(r)
-    return np.block([[C, R], [Z, C]])
+    # fmt: off
+    return np.block([[C, R @ C],
+                     [Z, C]])
+    # fmt: on
+
+
+def classical_acceleration_offset(V):
+    v, ω = V[:3], V[3:]
+    return np.concatenate((np.cross(ω, v), np.zeros(3)))
 
 
 def test_velocity_frames():
@@ -33,19 +54,18 @@ def test_velocity_frames():
 
     model.forward(q, v)
     r_ew_w, C_we = model.link_pose(rotation_matrix=True)
+
     V = np.concatenate(model.link_velocity())
-    V_local = np.concatenate(model.link_velocity(frame="local"))
-    V_local_world_aligned = np.concatenate(
-        model.link_velocity(frame="local_world_aligned")
-    )
-    V_world = np.concatenate(model.link_velocity(frame="world"))
+    V_b = np.concatenate(model.link_velocity(frame="local"))
+    V_a = np.concatenate(model.link_velocity(frame="local_world_aligned"))
+    V_w = np.concatenate(model.link_velocity(frame="world"))
 
     # check default frame is local-world-aligned
-    assert np.allclose(V, V_local_world_aligned)
+    assert np.allclose(V, V_a)
 
     # check relationshops between representations
-    assert np.allclose(V_local, adj(C=C_we.T) @ V_local_world_aligned)
-    assert np.allclose(V_world, adj(r=r_ew_w) @ V_local_world_aligned)
+    assert np.allclose(V_b, adj(C=C_we.T) @ V_a)
+    assert np.allclose(V_w, adj(r=r_ew_w) @ V_a)
 
 
 def test_acceleration_frames():
@@ -65,19 +85,36 @@ def test_acceleration_frames():
     r_ew_w, C_we = model.link_pose(rotation_matrix=True)
     v_ew_w, ω_ew_w = model.link_velocity()
 
-    A_local = np.concatenate((model.link_classical_acceleration(frame="local")))
-    A_local_world_aligned = np.concatenate(
-        (model.link_classical_acceleration(frame="local_world_aligned"))
-    )
-    A_world = np.concatenate((model.link_classical_acceleration(frame="world")))
+    V_b = np.concatenate(model.link_velocity(frame="local"))
+    V_a = np.concatenate(model.link_velocity(frame="local_world_aligned"))
+    V_w = np.concatenate(model.link_velocity(frame="world"))
+
+    Ac_b = np.concatenate((model.link_classical_acceleration(frame="local")))
+    Ac_a = np.concatenate((model.link_classical_acceleration(frame="local_world_aligned")))
+    Ac_w = np.concatenate((model.link_classical_acceleration(frame="world")))
 
     W = core.math.skew3(ω_ew_w)
-    A_world_pred = adj(r=r_ew_w) @ A_local_world_aligned - np.concatenate(
+    Ac_w_expected = adj(r=r_ew_w) @ Ac_a - np.concatenate(
         (W @ W @ r_ew_w, np.zeros(3))
     )
 
-    assert np.allclose(A_local, adj(C=C_we.T) @ A_local_world_aligned)
-    assert np.allclose(A_world, A_world_pred)
+    assert np.allclose(Ac_b, adj(C=C_we.T) @ Ac_a)
+    assert np.allclose(Ac_w, Ac_w_expected)
+
+    # spatial accelerations
+    As_b = np.concatenate((model.link_spatial_acceleration(frame="local")))
+    As_a = np.concatenate((model.link_spatial_acceleration(frame="local_world_aligned")))
+    As_w = np.concatenate((model.link_spatial_acceleration(frame="world")))
+
+    # mapping between classical and spatial
+    assert np.allclose(Ac_b, As_b + classical_acceleration_offset(V_b))
+    assert np.allclose(Ac_a, As_a + classical_acceleration_offset(V_a))
+    assert np.allclose(Ac_w, As_w + classical_acceleration_offset(V_w))
+
+    # relationships between spatial frames
+    assert np.allclose(As_b, adj(C=C_we.T) @ As_a)
+    assert np.allclose(As_w, adj(r=r_ew_w) @ As_a)
+    assert np.allclose(As_w, adj(C=C_we, r=r_ew_w) @ As_b)
 
 
 def test_velocity_mapping():
