@@ -209,8 +209,9 @@ class SimpleSignalHandler:
         received.
     """
 
-    def __init__(self, sigint=True, sigterm=False):
+    def __init__(self, sigint=True, sigterm=False, callback=None):
         self.received = False
+        self._callback = callback
         if sigint:
             signal.signal(signal.SIGINT, self.handler)
         if sigterm:
@@ -219,3 +220,5 @@ class SimpleSignalHandler:
     def handler(self, signum, frame):
         print(f"Received signal: {signum}")
         self.received = True
+        if self._callback is not None:
+            self._callback()

@@ -213,7 +213,7 @@ files (for acceleration), the joint limits are:
 The lights on the corners of the Ridgeback mean different things depending on
 the color. The main ones are:
 
-* Green: plugged in, charging
+* Green: plugged in (not necessarily charging)
 * Flashing red: e-stop
 * Front white, back red: ready to drive
 * Flashing yellow: battery level is below 24V, charge soon

@@ -5,7 +5,7 @@ import rospkg
 from spatialmath.base import r2q
 from xacrodoc import XacroDoc
 
-from mobile_manipulation_central.ros_utils import package_file_path
+from .ros_utils import package_file_path
 
 
 def _ref_frame_from_string(s):

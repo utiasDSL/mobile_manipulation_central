@@ -6,6 +6,7 @@ import numpy as np
 import rospkg
 import yaml
 
+# TODO clean up this file
 from mobile_manipulation_central.ros_utils import (
     msg_time,
     parse_time,
@@ -38,11 +39,12 @@ from mobile_manipulation_central.simulation import (
     BulletSimulation,
     BulletSimulatedRobot,
 )
-from mobile_manipulation_central.ros_logging import DataRecorder, ViconRateChecker
+from mobile_manipulation_central.ros_logging import (
+    BAG_DIR,
+    DataRecorder,
+    ViconRateChecker,
+)
 import mobile_manipulation_central.kalman_filter as kf
-
-BAG_DIR_ENV_VAR = "MOBILE_MANIPULATION_CENTRAL_BAG_DIR"
-BAG_DIR = os.environ[BAG_DIR_ENV_VAR]
 
 
 def bound_array(a, lb=None, ub=None):

@@ -10,13 +10,20 @@ from geometry_msgs.msg import TransformStamped
 from mobile_manipulation_central.ros_utils import vicon_topic_name
 
 
+BAG_DIR_ENV_VAR = "MOBILE_MANIPULATION_CENTRAL_BAG_DIR"
+BAG_DIR = os.environ.get(BAG_DIR_ENV_VAR, None)
+
 ROSBAG_CMD_ROOT = ["rosbag", "record"]
 
 
 class DataRecorder:
     def __init__(self, topics, name=None, root=None, notes=None):
         if root is None:
-            root = os.environ["MOBILE_MANIPULATION_CENTRAL_BAG_DIR"]
+            if BAG_DIR is None:
+                raise ValueError(
+                    f"No root directory given and {BAG_DIR_ENV_VAR} environment variable not set."
+                )
+            root = BAG_DIR
 
         stamp = datetime.datetime.now()
         ymd = stamp.strftime("%Y-%m-%d")
@@ -81,7 +88,9 @@ class ViconRateChecker:
         self.done = False
 
         self.topic_name = vicon_topic_name(vicon_object_name)
-        self.vicon_sub = rospy.Subscriber(self.topic_name, TransformStamped, self._vicon_cb)
+        self.vicon_sub = rospy.Subscriber(
+            self.topic_name, TransformStamped, self._vicon_cb
+        )
 
     def _vicon_cb(self, msg):
         """Vicon subscriber callback."""
@@ -133,9 +142,10 @@ class ViconRateChecker:
         upper = expected_rate + bound
 
         if verbose:
-            print(f"Received {self.msg_count} Vicon messages over {self.duration} seconds.")
+            print(
+                f"Received {self.msg_count} Vicon messages over {self.duration} seconds."
+            )
             print(f"Expected Vicon rate = {expected_rate} Hz")
             print(f"Average Vicon rate = {rate} Hz")
 
         return lower <= rate <= upper
-

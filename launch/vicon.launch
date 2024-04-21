@@ -32,9 +32,9 @@
   <param name="$(arg tray_vicon_model)/zero_pose/position/x" value="0" type="double" />
   <param name="$(arg tray_vicon_model)/zero_pose/position/y" value="0" type="double" />
   <param name="$(arg tray_vicon_model)/zero_pose/position/z" value="0" type="double" />
-  <param name="$(arg tray_vicon_model)/zero_pose/orientation/x" value="0.027408668602648924" type="double" />
-  <param name="$(arg tray_vicon_model)/zero_pose/orientation/y" value="0.0013204424447168584" type="double" />
-  <param name="$(arg tray_vicon_model)/zero_pose/orientation/z" value="0.0034210040275115036" type="double" />
-  <param name="$(arg tray_vicon_model)/zero_pose/orientation/w" value="0.9996175859040417" type="double" />
+  <param name="$(arg tray_vicon_model)/zero_pose/orientation/x" value="0.020099237244223918" type="double" />
+  <param name="$(arg tray_vicon_model)/zero_pose/orientation/y" value="0.01705956440615494" type="double" />
+  <param name="$(arg tray_vicon_model)/zero_pose/orientation/z" value="-0.000862377316570669" type="double" />
+  <param name="$(arg tray_vicon_model)/zero_pose/orientation/w" value="0.9996520635850438" type="double" />
   </node>
 </launch>
