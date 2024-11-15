@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Plot position of Vicon objects from a ROS bag."""
 import argparse
 
@@ -33,20 +34,20 @@ def main():
     z = np.array([0, 0, 1])
     for name, topic in zip(names, topics):
         msgs = [msg for _, msg, _ in bag.read_messages(topic)]
-        positions = []
-        orientations = []
+        times, poses = ros_utils.parse_transform_stamped_msgs(msgs)
+
+        # in case messages received out of order
+        # times, poses = sort_list_by(times, poses)
+
+        # difference in times
+        dt = times[1:] - times[:-1]
+
+        positions = poses[:, :3]
+        orientations = poses[:, 3:]
         angles = []
-        for msg in msgs:
-            p = msg.transform.translation
-            positions.append([p.x, p.y, p.z])
-            q = msg.transform.rotation
-            orientation = np.array([q.x, q.y, q.z, q.w])
-            orientations.append(orientation)
-            R = q2r(orientation, order="xyzs")
+        for orn in orientations:
+            R = q2r(orn, order="xyzs")
             angles.append(np.arccos(z @ R @ z))
-        positions = np.array(positions)
-        orientations = np.array(orientations)
-        times = ros_utils.parse_time(msgs)
 
         # x, y, z position vs. time
         plt.figure()
@@ -76,8 +77,22 @@ def main():
         fig = plt.figure()
         ax = fig.add_subplot(projection="3d")
         ax.plot(positions[:, 0], positions[:, 1], zs=positions[:, 2])
-        ax.plot(positions[0, 0], positions[0, 1], positions[0, 2], "o", color="g", label="Start")
-        ax.plot(positions[-1, 0], positions[-1, 1], positions[-1, 2], "o", color="r", label="End")
+        ax.plot(
+            positions[0, 0],
+            positions[0, 1],
+            positions[0, 2],
+            "o",
+            color="g",
+            label="Start",
+        )
+        ax.plot(
+            positions[-1, 0],
+            positions[-1, 1],
+            positions[-1, 2],
+            "o",
+            color="r",
+            label="End",
+        )
         ax.grid()
         ax.legend()
         ax.set_xlabel("x (m)")
@@ -87,6 +102,13 @@ def main():
 
         ax.set_xlim([-3, 3])
         ax.set_ylim([-3, 3])
+
+        plt.figure()
+        plt.scatter(times[1:], dt)
+        plt.xlabel("Time (s)")
+        plt.ylabel("dt (s)")
+        plt.title(f"{name} message time differences")
+        plt.grid()
 
     plt.show()
 

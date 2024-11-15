@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   sensor_msgs
   urdf
-  pybind11_catkin
 )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -25,15 +24,9 @@ find_package(pinocchio REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    INCLUDE_DIRS include
-#  LIBRARIES mobile_manipulation_central
 #  CATKIN_DEPENDS other_catkin_pkg
-   DEPENDS Eigen3 pinocchio
+   DEPENDS EIGEN3 pinocchio
 )
-
-# catkin_install_python(PROGRAMS
-#    src/joy_stick_relay_node.py
-#    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-#  )
 
 ###########
 ## Build ##
@@ -46,47 +39,25 @@ set(FLAGS ${pinocchio_CFLAGS_OTHER})
 include_directories(
  include
  ${catkin_INCLUDE_DIRS}
- ${EIGEN3_INCLUDE_DIRS}
- ${pinocchio_INCLUDE_DIRS}
-)
-link_directories(
-  ${pinocchio_LIBRARY_DIRS}
-)
-
-# NOTE: bindings are not currently useful, so not built
-pybind11_add_module(bindings SHARED
-  src/pybindings.cpp
-)
-target_link_libraries(bindings PRIVATE
-  ${catkin_LIBRARIES}
 )
 
 add_executable(ridgeback_vicon_estimator_node src/ridgeback_vicon_estimator_node.cpp)
 target_link_libraries(ridgeback_vicon_estimator_node
   ${catkin_LIBRARIES}
+  Eigen3::Eigen
 )
 
 add_executable(projectile_vicon_estimator_node src/projectile_vicon_estimator_node.cpp)
 target_link_libraries(projectile_vicon_estimator_node
   ${catkin_LIBRARIES}
+  Eigen3::Eigen
 )
 
 add_executable(kinematics_example src/kinematics_example.cpp)
 target_link_libraries(kinematics_example
   ${catkin_LIBRARIES}
-  ${pinocchio_LIBRARIES}
-)
-
-#############
-## Install ##
-#############
-
-install(TARGETS bindings
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
-)
-set_target_properties(bindings
-    PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+  pinocchio::pinocchio
+  Eigen3::Eigen
 )
 
 # Python setup
