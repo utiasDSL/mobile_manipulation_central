@@ -45,19 +45,15 @@ git clone -b melodic-devel https://github.com/ros-industrial/universal_robot.git
 ```
 
 For kinematics, [Pinocchio](https://github.com/stack-of-tasks/pinocchio) is
-required. I prefer to build this outside of the catkin workspace.  First,
-install the dependencies
+required:
 ```
-sudo apt install ros-noetic-eigenpy ros-noetic-hpp-fcl
-```
-Then follow the installation directions
-[here](https://stack-of-tasks.github.io/pinocchio/download.html) (under the
-"Build from Source" tab), using the cmake command:
-```
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DPYTHON_EXECUTABLE=/usr/bin/python3 -DBUILD_WITH_COLLISION_SUPPORT=ON
+sudo apt install ros-noetic-eigenpy ros-noetic-hpp-fcl ros-noetic-pinocchio
 ```
 Ensure that you also modify `$PYTHONPATH` to include the location of
-Pinocchio's Python bindings.
+Pinocchio's Python bindings. Typically, this would be something like
+```
+/opt/ros/noetic/lib/python3.8/site-packages
+```
 
 Finally, install Python dependencies:
 ```
@@ -106,13 +102,6 @@ address of `192.168.131.100` with netmask `255.255.255.0`. Leave the gateway
 blank. Once done, you should be able to ping the robot at `192.168.131.1`.
 
 ## Usage
-
-URDF files of the robots are used for kinematics and simulation. Compile the
-xacro files to produce the URDFs:
-```
-cd mobile_manipulation_central/urdf
-./compile_xacro.sh
-```
 
 One of the main goals of this repo is to facilitate easy development over ROS.
 We provide ROS interfaces for the base, arm, and combined mobile manipulator
