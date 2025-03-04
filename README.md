@@ -29,25 +29,9 @@ directory.
 
 ## Installation and Setup
 
-Ensure ROS is installed.
-
-Install [Eigen](https://eigen.tuxfamily.org): `sudo apt install libeigen3-dev`
-
-Clone this repository into the catkin workspace:
+Ensure ROS is installed. Install dependencies:
 ```
-cd catkin_ws/src
-git clone https://github.com/utiasDSL/mobile_manipulation_central mobile_manipulation_central
-```
-
-Clone the description of the UR10 robot arm into the catkin workspace:
-```
-git clone -b melodic-devel https://github.com/ros-industrial/universal_robot.git universal_robot
-```
-
-For kinematics, [Pinocchio](https://github.com/stack-of-tasks/pinocchio) is
-required:
-```
-sudo apt install ros-noetic-eigenpy ros-noetic-hpp-fcl ros-noetic-pinocchio
+sudo apt install libeigen3-dev ros-noetic-eigenpy ros-noetic-hpp-fcl ros-noetic-pinocchio
 ```
 Ensure that you also modify `$PYTHONPATH` to include the location of
 Pinocchio's Python bindings. Typically, this would be something like
@@ -55,9 +39,20 @@ Pinocchio's Python bindings. Typically, this would be something like
 /opt/ros/noetic/lib/python3.8/site-packages
 ```
 
-Finally, install Python dependencies:
+Clone this repository into the catkin workspace:
+```
+cd catkin_ws/src
+git clone https://github.com/utiasDSL/mobile_manipulation_central mobile_manipulation_central
+```
+
+Install Python dependencies:
 ```
 python3 -m pip install -r requirements.txt
+```
+
+Build the workspace:
+```
+catkin build
 ```
 
 ### Real Hardware Setup
@@ -69,11 +64,6 @@ workspace:
 * [vicon_bridge](https://github.com/ethz-asl/vicon_bridge) - required to track
   the position of the mobile base. May also be useful to track other objects,
   calibrate the EE pose, etc.
-
-Build the workspace:
-```
-catkin build
-```
 
 The ROS master node runs onboard the Ridgeback computer and is started
 automatically when the Ridgeback is turned on. You need to tell your laptop
