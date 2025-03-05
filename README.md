@@ -84,7 +84,7 @@ unset ROS_IP
 unset ROS_HOSTNAME
 ```
 It is convenient to put the above functions in a script that can be easily
-sourced.
+sourced (I like to use [this tool](https://github.com/adamheins/s)).
 
 Connect to the robot via ethernet and set up a new Wired Connection named
 `Thing`. In the `IPv4 Settings` tab, switch to method `Manual` and enter an
