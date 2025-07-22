@@ -245,18 +245,23 @@ If the voltage is approaching 22V, stop experiments and plug in the robot.
   ```
   could not connect to robot at address 192.168.131.40
   ```
-  Thus far the only known solution is to restart the UR10 until the problem
+  You can test for this explicitly by trying to ping the arm:
+  ```
+  ping 192.168.131.40
+  ```
+  which will say that the host in unreachable. This can be fixed by unplugging
+  and replugging the ethernet cable between the base and arm *at the arm's
+  computer*. Alternatively, one can restart the UR10 until the problem
   goes away (i.e. the connection is established properly). There is no need to
   restart the Ridgeback. It appears that this is a startup issue; the
   connection is generally very stable once established. The ethernet cable
   between the base and arm computers does not seem to be at fault: it was
-  replaced and the issue was seen again.
-* Related to the above, it is possible that the connection from the laptop to
+  replaced and the issue was seen again. It appears there may be an issue with
+  arm's startup network logic.
+* Similar to the above, it is possible that the connection from the laptop to
   the Ridgeback will also not be available, despite the base (and possibly the
-  arm) appearing to be powered on normally. Restarting the base eventually
-  resolves the problem. It is possible that the ethernet cable between the
-  base's network switch and the arm's computer is wearing out and will need to
-  be replaced.
+  arm) appearing to be powered on normally. However, this seems to be quite
+  rare. Restarting the base eventually resolves the problem. 
 * Occasionally after starting the arm, one may get protective stops after every
   small movement of the arm, due to base deviation from desired path. So far,
   it appears that restarting the arm resolved the problem.
