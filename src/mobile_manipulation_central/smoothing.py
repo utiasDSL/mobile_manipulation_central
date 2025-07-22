@@ -27,10 +27,13 @@ class ExponentialSmoother:
         If ``τ`` is negative.
     """
 
-    def __init__(self, τ, x0):
+    def __init__(self, τ, x0=None):
         assert τ >= 0
         self.τ = τ  # time constant
         self.x = x0  # initial state/guess
+
+    def reset(self, x=None):
+        self.x = x
 
     def update(self, y, dt):
         """Update the estimate.
