@@ -5,15 +5,6 @@ import yaml
 from pathlib import Path
 
 
-def bound_array(a, lb=None, ub=None):
-    """Elementwise bound array above and below."""
-    if lb is not None:
-        a = np.maximum(a, lb)
-    if ub is not None:
-        a = np.minimum(a, ub)
-    return a
-
-
 def wrap_to_pi(x):
     """Wrap a value to [-pi, pi]"""
     return math.remainder(x, 2 * np.pi)

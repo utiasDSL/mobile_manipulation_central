@@ -18,4 +18,4 @@ from .trajectory_generation import PointToPointTrajectory, QuinticTimeScaling
 from .smoothing import ExponentialSmoother
 from .simulation import BulletSimulation, BulletSimulatedRobot
 from .ros_logging import BAG_DIR, DataRecorder, ViconRateChecker
-from .utils import bound_array, wrap_to_pi, load_home_position
+from .utils import wrap_to_pi, load_home_position

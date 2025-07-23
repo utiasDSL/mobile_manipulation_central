@@ -77,7 +77,9 @@ def main():
             print(f"Average configuration = {q}.")
 
         cmd_vel = np.array([P_GAIN * error, 0, 0])
-        cmd_vel = mm.bound_array(cmd_vel, lb=-MAX_JOINT_VELOCITY, ub=MAX_JOINT_VELOCITY)
+        cmd_vel = np.clip(
+            a=cmd_vel, a_min=-MAX_JOINT_VELOCITY, a_max=MAX_JOINT_VELOCITY
+        )
         robot.publish_cmd_vel(cmd_vel)
 
         rate.sleep()

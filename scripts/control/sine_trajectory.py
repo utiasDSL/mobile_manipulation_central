@@ -61,7 +61,9 @@ def main():
         vd[args.joint_index] = vdi
 
         cmd_vel = P_GAIN * (qd - robot.q) + vd
-        cmd_vel = mm.bound_array(cmd_vel, lb=-MAX_JOINT_VELOCITY, ub=MAX_JOINT_VELOCITY)
+        cmd_vel = np.clip(
+            a=cmd_vel, a_min=-MAX_JOINT_VELOCITY, a_max=MAX_JOINT_VELOCITY
+        )
         if args.dry_run:
             print(cmd_vel)
         else:
