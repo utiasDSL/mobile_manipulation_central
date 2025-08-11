@@ -169,6 +169,9 @@ the limits are:
 | y     | 1.1 m/s   | 2.5 m/s²     |
 | yaw   | 2.0 rad/s | 1.0 rad/s²   |
 
+These values can be confirmed on the real system by checking the parameters
+using `rosparam get /ridgeback_velocity_controller/...`
+
 ### UR10 limits
 With reference to the UR10 datasheet as well as the onboard UR10 configuration
 files (for acceleration), the joint limits are:
