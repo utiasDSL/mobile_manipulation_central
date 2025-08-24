@@ -29,9 +29,15 @@ directory.
 
 ## Installation and Setup
 
-Ensure ROS is installed.
-
-Install [Eigen](https://eigen.tuxfamily.org): `sudo apt install libeigen3-dev`
+Ensure ROS is installed. Install dependencies:
+```
+sudo apt install libeigen3-dev ros-noetic-eigenpy ros-noetic-hpp-fcl ros-noetic-pinocchio
+```
+Ensure that you also modify `$PYTHONPATH` to include the location of
+Pinocchio's Python bindings. Typically, this would be something like
+```
+/opt/ros/noetic/lib/python3.8/site-packages
+```
 
 Clone this repository into the catkin workspace:
 ```
@@ -39,29 +45,14 @@ cd catkin_ws/src
 git clone https://github.com/utiasDSL/mobile_manipulation_central mobile_manipulation_central
 ```
 
-Clone the description of the UR10 robot arm into the catkin workspace:
-```
-git clone -b melodic-devel https://github.com/ros-industrial/universal_robot.git universal_robot
-```
-
-For kinematics, [Pinocchio](https://github.com/stack-of-tasks/pinocchio) is
-required. I prefer to build this outside of the catkin workspace.  First,
-install the dependencies
-```
-sudo apt install ros-noetic-eigenpy ros-noetic-hpp-fcl
-```
-Then follow the installation directions
-[here](https://stack-of-tasks.github.io/pinocchio/download.html) (under the
-"Build from Source" tab), using the cmake command:
-```
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DPYTHON_EXECUTABLE=/usr/bin/python3 -DBUILD_WITH_COLLISION_SUPPORT=ON
-```
-Ensure that you also modify `$PYTHONPATH` to include the location of
-Pinocchio's Python bindings.
-
-Finally, install Python dependencies:
+Install Python dependencies:
 ```
 python3 -m pip install -r requirements.txt
+```
+
+Build the workspace:
+```
+catkin build
 ```
 
 ### Real Hardware Setup
@@ -73,11 +64,6 @@ workspace:
 * [vicon_bridge](https://github.com/ethz-asl/vicon_bridge) - required to track
   the position of the mobile base. May also be useful to track other objects,
   calibrate the EE pose, etc.
-
-Build the workspace:
-```
-catkin build
-```
 
 The ROS master node runs onboard the Ridgeback computer and is started
 automatically when the Ridgeback is turned on. You need to tell your laptop
@@ -98,7 +84,7 @@ unset ROS_IP
 unset ROS_HOSTNAME
 ```
 It is convenient to put the above functions in a script that can be easily
-sourced.
+sourced (I like to use [this tool](https://github.com/adamheins/s)).
 
 Connect to the robot via ethernet and set up a new Wired Connection named
 `Thing`. In the `IPv4 Settings` tab, switch to method `Manual` and enter an
@@ -106,13 +92,6 @@ address of `192.168.131.100` with netmask `255.255.255.0`. Leave the gateway
 blank. Once done, you should be able to ping the robot at `192.168.131.1`.
 
 ## Usage
-
-URDF files of the robots are used for kinematics and simulation. Compile the
-xacro files to produce the URDFs:
-```
-cd mobile_manipulation_central/urdf
-./compile_xacro.sh
-```
 
 One of the main goals of this repo is to facilitate easy development over ROS.
 We provide ROS interfaces for the base, arm, and combined mobile manipulator
@@ -190,6 +169,9 @@ the limits are:
 | y     | 1.1 m/s   | 2.5 m/s²     |
 | yaw   | 2.0 rad/s | 1.0 rad/s²   |
 
+These values can be confirmed on the real system by checking the parameters
+using `rosparam get /ridgeback_velocity_controller/...`
+
 ### UR10 limits
 With reference to the UR10 datasheet as well as the onboard UR10 configuration
 files (for acceleration), the joint limits are:
@@ -266,18 +248,23 @@ If the voltage is approaching 22V, stop experiments and plug in the robot.
   ```
   could not connect to robot at address 192.168.131.40
   ```
-  Thus far the only known solution is to restart the UR10 until the problem
+  You can test for this explicitly by trying to ping the arm:
+  ```
+  ping 192.168.131.40
+  ```
+  which will say that the host in unreachable. This can be fixed by unplugging
+  and replugging the ethernet cable between the base and arm *at the arm's
+  computer*. Alternatively, one can restart the UR10 until the problem
   goes away (i.e. the connection is established properly). There is no need to
   restart the Ridgeback. It appears that this is a startup issue; the
   connection is generally very stable once established. The ethernet cable
   between the base and arm computers does not seem to be at fault: it was
-  replaced and the issue was seen again.
-* Related to the above, it is possible that the connection from the laptop to
+  replaced and the issue was seen again. It appears there may be an issue with
+  arm's startup network logic.
+* Similar to the above, it is possible that the connection from the laptop to
   the Ridgeback will also not be available, despite the base (and possibly the
-  arm) appearing to be powered on normally. Restarting the base eventually
-  resolves the problem. It is possible that the ethernet cable between the
-  base's network switch and the arm's computer is wearing out and will need to
-  be replaced.
+  arm) appearing to be powered on normally. However, this seems to be quite
+  rare. Restarting the base eventually resolves the problem. 
 * Occasionally after starting the arm, one may get protective stops after every
   small movement of the arm, due to base deviation from desired path. So far,
   it appears that restarting the arm resolved the problem.

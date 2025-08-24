@@ -5,15 +5,6 @@ import yaml
 from pathlib import Path
 
 
-def bound_array(a, lb=None, ub=None):
-    """Elementwise bound array above and below."""
-    if lb is not None:
-        a = np.maximum(a, lb)
-    if ub is not None:
-        a = np.minimum(a, ub)
-    return a
-
-
 def wrap_to_pi(x):
     """Wrap a value to [-pi, pi]"""
     return math.remainder(x, 2 * np.pi)
@@ -33,3 +24,25 @@ def load_home_position(name="default", path=None):
     with open(path) as f:
         data = yaml.safe_load(f)
     return np.array(data[name])
+
+
+def load_pkg_config(pkg_name, relpath):
+    """Load a YAML config file from a ROS package.
+
+    Parameters
+    ----------
+    pkg_name : str
+        The name of the ROS package.
+    relpath : str or Path
+        Path of the config file relative to the package root.
+
+    Returns
+    -------
+    : dict
+        The configuration.
+    """
+    rospack = rospkg.RosPack()
+    pkg_path = Path(rospack.get_path(pkg_name))
+    path = pkg_path / relpath
+    with open(path) as f:
+        return yaml.safe_load(f)

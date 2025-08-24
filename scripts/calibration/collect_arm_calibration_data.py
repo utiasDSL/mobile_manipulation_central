@@ -213,7 +213,9 @@ def main():
         t = rospy.Time.now().to_sec()
         qd, vd, _ = trajectory.sample(t)
         cmd_vel = P_GAIN * (qd - robot.q) + vd
-        cmd_vel = mm.bound_array(cmd_vel, lb=-MAX_JOINT_VELOCITY, ub=MAX_JOINT_VELOCITY)
+        cmd_vel = np.clip(
+            a=cmd_vel, a_min=-MAX_JOINT_VELOCITY, a_max=MAX_JOINT_VELOCITY
+        )
         robot.publish_cmd_vel(cmd_vel)
 
         rate.sleep()

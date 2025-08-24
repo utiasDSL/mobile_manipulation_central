@@ -30,9 +30,8 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "name",
+        "--name",
         help="Name of the home position to move to.",
-        nargs="?",
         default="default",
     )
     parser.add_argument(
@@ -86,41 +85,44 @@ def main():
     q_prev = q0
 
     # use P control + feedforward velocity to track the trajectory
-    while not rospy.is_shutdown():
-        t = rospy.Time.now().to_sec()
+    try:
+        while not rospy.is_shutdown():
+            t = rospy.Time.now().to_sec()
 
-        # TODO strictly speaking this should also wrap using the delta
-        dist = np.linalg.norm(home - robot.q)
+            delta = home - robot.q
+            if not args.arm_only:
+                delta[2] = mm.wrap_to_pi(delta[2])
+            dist = np.linalg.norm(delta)
 
-        # we want to both let the trajectory complete and ensure we've
-        # converged properly
-        if trajectory.done(t) and dist < CONVERGENCE_TOL:
-            break
+            # we want to both let the trajectory complete and ensure we've
+            # converged properly
+            if trajectory.done(t) and dist < CONVERGENCE_TOL:
+                break
 
-        qd, vd, _ = trajectory.sample(t)
-        error = qd - robot.q
-        if not args.arm_only:
-            error[2] = mm.wrap_to_pi(error[2])
-        cmd_vel = P_GAIN * error + vd
+            qd, vd, _ = trajectory.sample(t)
+            error = qd - robot.q
+            if not args.arm_only:
+                error[2] = mm.wrap_to_pi(error[2])
+            cmd_vel = P_GAIN * error + vd
 
-        # print(f"error = {np.linalg.norm(error)}")
-        Δq = robot.q - q_prev
-        q_prev = robot.q
-        # print(f"Δq = {Δq}")
+            Δq = robot.q - q_prev
+            q_prev = robot.q
 
-        # this shouldn't be needed unless the trajectory is poorly tracked, but
-        # we do it just in case for safety (e.g., bad measurements)
-        cmd_vel = mm.bound_array(cmd_vel, lb=-MAX_JOINT_VELOCITY, ub=MAX_JOINT_VELOCITY)
+            # this shouldn't be needed unless the trajectory is poorly tracked, but
+            # we do it just in case for safety (e.g., bad measurements)
+            cmd_vel = np.clip(
+                a=cmd_vel, a_min=-MAX_JOINT_VELOCITY, a_max=MAX_JOINT_VELOCITY
+            )
 
-        if args.dry_run:
-            print(cmd_vel)
-        else:
-            robot.publish_cmd_vel(cmd_vel, bodyframe=False)
+            if args.dry_run:
+                print(f"cmd_vel = {cmd_vel}")
+            else:
+                robot.publish_cmd_vel(cmd_vel, bodyframe=False)
 
-        rate.sleep()
-
-    if not args.dry_run:
-        robot.brake()
+            rate.sleep()
+    finally:
+        if not args.dry_run:
+            robot.brake()
 
     print(f"Converged to within {dist} of home position.")
 

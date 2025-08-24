@@ -32,6 +32,9 @@ class ExponentialSmoother:
         self.τ = τ  # time constant
         self.x = x0  # initial state/guess
 
+    def reset(self, x=None):
+        self.x = x
+
     def update(self, y, dt):
         """Update the estimate.
 
