@@ -27,7 +27,7 @@ class ExponentialSmoother:
         If ``τ`` is negative.
     """
 
-    def __init__(self, τ, x0):
+    def __init__(self, τ, x0=None):
         assert τ >= 0
         self.τ = τ  # time constant
         self.x = x0  # initial state/guess
@@ -47,6 +47,11 @@ class ExponentialSmoother:
         :
             The updated estimate.
         """
+        # if the state has not been initialized at all, just use the first
+        # measurement
+        if self.x is None:
+            self.x = y
+
         # zero time-constant means no filtering is done
         if self.τ <= 0:
             return y
