@@ -50,6 +50,11 @@ class ExponentialSmoother:
         :
             The updated estimate.
         """
+        # if the state has not been initialized at all, just use the first
+        # measurement
+        if self.x is None:
+            self.x = y
+
         # zero time-constant means no filtering is done
         if self.τ <= 0:
             return y
