@@ -37,7 +37,7 @@ def main():
         "filename",
         help="Filename for the saved data. Timestamp is automatically appended.",
         nargs="?",
-        default="base_calibration_data",
+        default="base_position_calibration_data",
     )
     args = parser.parse_args()
 
@@ -60,31 +60,32 @@ def main():
     qs = []
 
     # only do control on the angle, which we then use to calibrate the position
-    idx = 0
-    while not rospy.is_shutdown():
-        error = θds[idx] - robot.q[2]
-        if np.abs(error) < CONVERGENCE_TOL:
-            robot.brake()
-            print(f"Converged to location {idx}.")
+    try:
+        idx = 0
+        while not rospy.is_shutdown():
+            error = θds[idx] - robot.q[2]
+            if np.abs(error) < CONVERGENCE_TOL:
+                robot.brake()
+                print(f"Converged to location {idx}.")
 
-            idx += 1
-            if idx >= num_configs:
-                break
+                idx += 1
+                if idx >= num_configs:
+                    break
 
-            q = average_configuration(robot, rate)
-            qs.append(q)
+                q = average_configuration(robot, rate)
+                qs.append(q)
 
-            print(f"Average configuration = {q}.")
+                print(f"Average configuration = {q}.")
 
-        cmd_vel = np.array([0, 0, P_GAIN * error])
-        cmd_vel = np.clip(
-            a=cmd_vel, a_min=-MAX_JOINT_VELOCITY, a_max=MAX_JOINT_VELOCITY
-        )
-        robot.publish_cmd_vel(cmd_vel)
+            cmd_vel = np.array([0, 0, P_GAIN * error])
+            cmd_vel = np.clip(
+                a=cmd_vel, a_min=-MAX_JOINT_VELOCITY, a_max=MAX_JOINT_VELOCITY
+            )
+            robot.publish_cmd_vel(cmd_vel)
 
-        rate.sleep()
-
-    robot.brake()
+            rate.sleep()
+    finally:
+        robot.brake()
 
     filename = f"{args.filename}_{timestamp}.npz"
     np.savez_compressed(filename, q0=q0, θds=θds, qs=qs)

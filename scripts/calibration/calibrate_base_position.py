@@ -11,7 +11,8 @@ import numpy as np
 
 # provide the Vicon zero pose orientation to rotate the offset into the correct
 # base frame
-Q_bv = np.array([0, 0, -0.00792683, 0.99996858])
+# TODO load from file?
+Q_bv = [0, 0, -0.00538166, 0.99998552]
 
 def main():
     parser = argparse.ArgumentParser()
@@ -44,8 +45,6 @@ def main():
 
     C_bv = q2r(Q_bv, order="xyzs")
     r_vb_b = -C_bv @ np.append(r_bv_v, 0)
-
-    # print(f"r_bv_v = {r_bv_v}")
     print(f"r_vb_b = {r_vb_b} (use this for Vicon zero pose)")
 
 

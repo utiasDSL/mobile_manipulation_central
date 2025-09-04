@@ -60,31 +60,32 @@ def main():
     qs = []
 
     # only do control on the angle, which we then use to calibrate the position
-    idx = 0
-    while not rospy.is_shutdown():
-        error = xds[idx] - robot.q[0]
-        if np.abs(error) < CONVERGENCE_TOL:
-            robot.brake()
-            print(f"Converged to location {idx}.")
+    try:
+        idx = 0
+        while not rospy.is_shutdown():
+            error = xds[idx] - robot.q[0]
+            if np.abs(error) < CONVERGENCE_TOL:
+                robot.brake()
+                print(f"Converged to location {idx}.")
 
-            idx += 1
-            if idx >= num_configs:
-                break
+                idx += 1
+                if idx >= num_configs:
+                    break
 
-            q = average_configuration(robot, rate)
-            qs.append(q)
+                q = average_configuration(robot, rate)
+                qs.append(q)
 
-            print(f"Average configuration = {q}.")
+                print(f"Average configuration = {q}.")
 
-        cmd_vel = np.array([P_GAIN * error, 0, 0])
-        cmd_vel = np.clip(
-            a=cmd_vel, a_min=-MAX_JOINT_VELOCITY, a_max=MAX_JOINT_VELOCITY
-        )
-        robot.publish_cmd_vel(cmd_vel)
+            cmd_vel = np.array([P_GAIN * error, 0, 0])
+            cmd_vel = np.clip(
+                a=cmd_vel, a_min=-MAX_JOINT_VELOCITY, a_max=MAX_JOINT_VELOCITY
+            )
+            robot.publish_cmd_vel(cmd_vel)
 
-        rate.sleep()
-
-    robot.brake()
+            rate.sleep()
+    finally:
+        robot.brake()
 
     filename = f"{args.filename}_{timestamp}.npz"
     np.savez_compressed(filename, q0=q0, xds=xds, qs=qs)

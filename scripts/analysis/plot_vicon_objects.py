@@ -45,7 +45,11 @@ def main():
         positions = poses[:, :3]
         orientations = poses[:, 3:]
         angles = []
-        for orn in orientations:
+        for i, orn in enumerate(orientations):
+            # canonicalize by always making w non-negative (this avoids weird
+            # jumps in the plot)
+            if orn[3] < 0:
+                orientations[i, :] *= -1
             R = q2r(orn, order="xyzs")
             angles.append(np.arccos(z @ R @ z))
 
