@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   sensor_msgs
   urdf
+  tf
 )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)

@@ -78,7 +78,7 @@ export ROS_MASTER_URI=http://cpr-tor11-01:11311
 ```
 To revert back to default settings (so you can run ROS locally, for example),
 do:
-```
+```bash
 export ROS_MASTER_URI=http://localhost:11311
 unset ROS_IP
 unset ROS_HOSTNAME
@@ -93,10 +93,18 @@ blank. Once done, you should be able to ping the robot at `192.168.131.1`.
 
 ## Usage
 
+URDF files of the robots are used for kinematics and simulation. Compile the
+xacro files to produce the URDFs:
+
+```bash
+cd mobile_manipulation_central/urdf
+./compile_xacro.sh
+```
+
 One of the main goals of this repo is to facilitate easy development over ROS.
 We provide ROS interfaces for the base, arm, and combined mobile manipulator
 system (`src/mobile_manipulation_central/ros_interface.py`) which provide a
-standard API to communicate with the robot over ROS. Theses interfaces can be
+standard API to communicate with the robot over ROS. These interfaces can be
 used seamlessly with real hardware or a simulated version of the robot
 (`src/mobile_manipulation_central/simulation_ros_interface.py`).
 
@@ -264,7 +272,7 @@ If the voltage is approaching 22V, stop experiments and plug in the robot.
 * Similar to the above, it is possible that the connection from the laptop to
   the Ridgeback will also not be available, despite the base (and possibly the
   arm) appearing to be powered on normally. However, this seems to be quite
-  rare. Restarting the base eventually resolves the problem. 
+  rare. Restarting the base eventually resolves the problem.
 * Occasionally after starting the arm, one may get protective stops after every
   small movement of the arm, due to base deviation from desired path. So far,
   it appears that restarting the arm resolved the problem.

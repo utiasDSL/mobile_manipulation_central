@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Single integrator ROS end point to simulate base and arm.
 
-This is intended to simulate to minimally simulate a robot with other real
+This is intended to minimally simulate a robot with other real
 components of the system.
 """
 import argparse
